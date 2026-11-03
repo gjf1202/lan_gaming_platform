@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#1e1f22">
-  <meta name="description" content="斗地主、五子棋、麻将，一个大厅畅玩局域网。">
+  <meta name="description" content="斗地主、五子棋、麻将与四款经典休闲游戏，一个大厅轻松玩。">
   <title>局域网游戏大厅</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%232b2d30'/%3E%3Cpath d='M20 16v32h27' fill='none' stroke='%239cb9aa' stroke-width='6'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="/style.css">
@@ -15,7 +15,7 @@
     <a class="brand" href="/" aria-label="返回大厅"><span class="brand-mark">游</span><span>游戏厅<span class="brand-caption">局域网游戏大厅</span></span></a>
     <div class="nav-caption">游戏空间</div>
     <nav aria-label="主导航">
-      <a class="nav-link active" href="#top"><span>▦</span> 大厅 <span class="nav-count">03</span></a>
+      <a class="nav-link active" href="#top"><span>▦</span> 大厅 <span class="nav-count">07</span></a>
       <a class="nav-link" href="#rooms"><span>☷</span> 房间列表</a>
     </nav>
     <div class="nav-caption games-caption">游戏</div>
@@ -23,6 +23,10 @@
       <a class="nav-link" href="/games/ddz/"><span class="nav-glyph">♠</span> 斗地主 <small>3人</small></a>
       <a class="nav-link" href="/games/wzq/"><span class="nav-glyph">●</span> 五子棋 <small>2人</small></a>
       <a class="nav-link" href="/games/mj/"><span class="nav-glyph">東</span> 麻将 <small>4人</small></a>
+      <a class="nav-link" href="/games/snake/"><span class="nav-glyph">∿</span> 贪吃蛇 <small>单人</small></a>
+      <a class="nav-link" href="/games/tetris/"><span class="nav-glyph">▥</span> 俄罗斯方块 <small>单人</small></a>
+      <a class="nav-link" href="/games/tank/"><span class="nav-glyph">⊞</span> 90坦克 <small>1–2人</small></a>
+      <a class="nav-link" href="/games/sokoban/"><span class="nav-glyph">◇</span> 推箱子 <small>单人</small></a>
     </nav>
     <div class="sidebar-bottom"><span class="live-dot"></span><span>同一局域网<br><small>好友一起玩</small></span></div>
   </aside>
@@ -33,12 +37,12 @@
     </header>
     <main>
       <section class="welcome" aria-labelledby="welcome-title">
-        <div><div class="eyebrow">和好友，一起放松片刻</div><h1 id="welcome-title">选个游戏，开一局。</h1><p>三款经典游戏，一个局域网大厅。</p></div>
+        <div><div class="eyebrow">和好友，一起放松片刻</div><h1 id="welcome-title">选个游戏，开一局。</h1><p>七款经典游戏，独自放松，或与好友同乐。</p></div>
         <button class="button primary" id="create-room" type="button"><span>＋</span> 创建房间</button>
       </section>
-      <section class="summary" aria-label="大厅概况"><span><strong>03</strong> 款游戏</span><span><strong id="room-count">—</strong> 个房间</span><span><strong id="player-count">—</strong> 人在玩</span><button class="text-button invite-button" id="copy-lobby" type="button">复制大厅链接 <span>↗</span></button></section>
+      <section class="summary" aria-label="大厅概况"><span><strong>07</strong> 款游戏</span><span><strong id="room-count">—</strong> 个房间</span><span><strong id="player-count">—</strong> 人在房间</span><button class="text-button invite-button" id="copy-lobby" type="button">复制大厅链接 <span>↗</span></button></section>
       <section aria-labelledby="games-title">
-        <div class="section-heading"><h2 id="games-title">全部游戏</h2><span class="muted">打开浏览器，即可加入</span></div>
+        <div class="section-heading"><h2 id="games-title">好友对战</h2><span class="muted">创建房间，邀请好友</span></div>
         <div class="game-grid">
           <article class="game-card" data-game="ddz">
             <a class="game-art cards-art" href="/games/ddz/" aria-label="打开斗地主"><div class="playing-card card-back"></div><div class="playing-card card-middle">K<span>♠</span></div><div class="playing-card card-front">A<span>♠</span><small>A</small></div><span class="art-index">01 / 斗地主</span></a>
@@ -51,6 +55,27 @@
           <article class="game-card" data-game="mj">
             <a class="game-art tiles-art" href="/games/mj/" aria-label="打开麻将"><div class="mini-tiles"><span>東</span><span>南</span><span>發</span></div><span class="art-index">03 / 麻将</span></a>
             <div class="game-info"><div class="game-title"><h3>麻将</h3><span class="badge">4人对战</span></div><p>摸打之间，等一手好牌。</p><div class="game-footer"><span class="game-room-count" id="mj-count">暂无房间</span><button class="button small" data-create="mj" type="button">创建 <span>↗</span></button></div><a class="continue-link" id="mj-continue" href="/games/mj/" hidden>继续原来的房间 →</a></div>
+          </article>
+        </div>
+      </section>
+      <section class="arcade-section" aria-labelledby="arcade-title">
+        <div class="section-heading"><h2 id="arcade-title">休闲时光</h2><span class="muted">无需建房，点开就玩</span></div>
+        <div class="game-grid arcade-grid">
+          <article class="game-card">
+            <a class="game-art snake-art" href="/games/snake/" aria-label="打开贪吃蛇"><div class="mini-snake"><i></i><i></i><i></i><i></i><i></i><b></b></div><span class="art-index">04 / 贪吃蛇</span></a>
+            <div class="game-info"><div class="game-title"><h3>贪吃蛇</h3><span class="badge">单人</span></div><p>吃点心，慢慢长大。</p><div class="game-footer"><span class="game-room-count">三档速度</span><a class="button small" href="/games/snake/">开始玩 ↗</a></div></div>
+          </article>
+          <article class="game-card">
+            <a class="game-art tetris-art" href="/games/tetris/" aria-label="打开俄罗斯方块"><div class="mini-tetris"><i></i><i></i><i></i><i></i></div><span class="art-index">05 / 俄罗斯方块</span></a>
+            <div class="game-info"><div class="game-title"><h3>俄罗斯方块</h3><span class="badge">单人</span></div><p>转一转，消去整行。</p><div class="game-footer"><span class="game-room-count">无尽挑战</span><a class="button small" href="/games/tetris/">开始玩 ↗</a></div></div>
+          </article>
+          <article class="game-card">
+            <a class="game-art tank-art" href="/games/tank/" aria-label="打开90坦克"><div class="mini-tank"><i></i><b></b></div><span class="art-index">06 / 90坦克</span></a>
+            <div class="game-info"><div class="game-title"><h3>90坦克</h3><span class="badge">1–2人</span></div><p>守住基地，并肩闯关。</p><div class="game-footer"><span class="game-room-count">同机合作</span><a class="button small" href="/games/tank/">开始玩 ↗</a></div></div>
+          </article>
+          <article class="game-card">
+            <a class="game-art sokoban-art" href="/games/sokoban/" aria-label="打开推箱子"><div class="mini-box">×</div><span class="art-index">07 / 推箱子</span></a>
+            <div class="game-info"><div class="game-title"><h3>推箱子</h3><span class="badge">单人</span></div><p>一步一步，把箱子归位。</p><div class="game-footer"><span class="game-room-count">八关解谜</span><a class="button small" href="/games/sokoban/">开始玩 ↗</a></div></div>
           </article>
         </div>
       </section>

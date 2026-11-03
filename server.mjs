@@ -11,12 +11,17 @@ import { fail, sendJson, rateLimit } from './lib/transport.mjs';
 export const GAME_CATALOG = [
   { id: 'ddz', name: '斗地主', capacity: 3, description: '一位地主，两位农民。', path: '/games/ddz/' },
   { id: 'wzq', name: '五子棋', capacity: 2, description: '五子连珠，先到先赢。', path: '/games/wzq/' },
-  { id: 'mj', name: '麻将', capacity: 4, description: '四人一桌，摸打之间。', path: '/games/mj/' }
+  { id: 'mj', name: '麻将', capacity: 4, description: '四人一桌，摸打之间。', path: '/games/mj/' },
+  { id: 'snake', name: '贪吃蛇', capacity: 1, mode: 'arcade', description: '吃点心，慢慢长大。', path: '/games/snake/' },
+  { id: 'tetris', name: '俄罗斯方块', capacity: 1, mode: 'arcade', description: '转一转，消去整行。', path: '/games/tetris/' },
+  { id: 'tank', name: '90坦克', capacity: 2, mode: 'arcade', description: '守住基地，并肩闯关。', path: '/games/tank/' },
+  { id: 'sokoban', name: '推箱子', capacity: 1, mode: 'arcade', description: '一步一步，把箱子归位。', path: '/games/sokoban/' }
 ];
 
 const MIME_TYPES = { html: 'text/html', js: 'text/javascript', css: 'text/css' };
 const ROOT_ASSETS = new Set(['index.html', 'app.js', 'style.css', 'bridge.js', 'platform.css']);
 const GAME_ASSETS = new Set(['index.html', 'app.js', 'style.css']);
+const ARCADE_ASSETS = new Set(['app.js', 'core.js', 'snake.js', 'tetris.js', 'tank.js', 'sokoban.js', 'style.css']);
 const FRONT_DOOR_LIMIT = 80;
 const FRONT_DOOR_WINDOW_MS = 10000;
 
@@ -61,7 +66,12 @@ export function createPlatform() {
         sendJson(response, info);
         return;
       }
-      const match = /^\/games\/(ddz|wzq|mj)(\/.*)?$/.exec(url.pathname);
+      const arcadeAsset = /^\/arcade\/([^/]+)$/.exec(url.pathname);
+      if (arcadeAsset && request.method === 'GET' && ARCADE_ASSETS.has(arcadeAsset[1])) {
+        await serveFile(response, new URL(`./public/arcade/${arcadeAsset[1]}`, import.meta.url), arcadeAsset[1]);
+        return;
+      }
+      const match = /^\/games\/(ddz|wzq|mj|snake|tetris|tank|sokoban)(\/.*)?$/.exec(url.pathname);
       if (match) {
         const [, game, gamePath] = match;
         if (!gamePath) {
@@ -70,6 +80,11 @@ export function createPlatform() {
           return;
         }
         const service = services.get(game);
+        if (!service) {
+          if (request.method !== 'GET' || !['/', '/index.html'].includes(gamePath)) { fail('页面不存在。', 404); }
+          await serveFile(response, new URL('./public/arcade/index.html', import.meta.url), 'index.html');
+          return;
+        }
         if (request.method === 'POST' && gamePath.startsWith('/api/')) {
           validateOrigin(request);
           if (['/api/create', '/api/join'].includes(gamePath)) {
@@ -130,7 +145,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     process.exitCode = 1;
   });
   platform.server.listen(port, '0.0.0.0', () => {
-    console.log(`\n  局域网游戏大厅\n  本机地址：http://localhost:${port}\n${lanAddresses(port).map((address) => `  局域网地址：${address}`).join('\n')}\n\n  分享局域网地址，即可一起玩三款游戏。\n  请保持此窗口运行，按 Ctrl+C 停止服务。\n`);
+    console.log(`\n  局域网游戏大厅\n  本机地址：http://localhost:${port}\n${lanAddresses(port).map((address) => `  局域网地址：${address}`).join('\n')}\n\n  分享局域网地址，即可进入七款游戏。\n  请保持此窗口运行，按 Ctrl+C 停止服务。\n`);
   });
   process.on('SIGINT', () => { platform.close(); });
   process.on('SIGTERM', () => { platform.close(); });

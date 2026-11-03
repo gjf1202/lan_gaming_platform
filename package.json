@@ -2,7 +2,7 @@
   "name": "lan-gaming-platform",
   "version": "1.0.0",
   "private": true,
-  "description": "简约中文局域网游戏大厅，包含斗地主、五子棋和麻将",
+  "description": "简约中文局域网游戏大厅，包含七款对战与经典休闲游戏",
   "type": "module",
   "scripts": { "start": "node server.mjs" },
   "engines": { "node": ">=18.2" }

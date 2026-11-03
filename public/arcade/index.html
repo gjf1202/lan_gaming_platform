@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#1e1f22">
+  <title>游戏厅 · 经典游戏</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%232b2d30'/%3E%3Ctext x='12' y='46' fill='%239dbdab' font-size='40'%3E游%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/arcade/style.css">
+  <script type="module" src="/arcade/app.js"></script>
+</head>
+<body>
+  <header class="topbar"><a class="brand" href="/">▦ 游戏厅 <span>/ 返回大厅</span></a><nav aria-label="经典游戏"><a href="/games/snake/">贪吃蛇</a><a href="/games/tetris/">俄罗斯方块</a><a href="/games/tank/">90坦克</a><a href="/games/sokoban/">推箱子</a></nav></header>
+  <main>
+    <div class="page-heading"><div><p class="eyebrow" id="mode-label">经典游戏</p><h1 id="game-title">载入游戏…</h1><p id="game-description">放松片刻，来上一局。</p></div><span class="save-note">记录保存在当前浏览器</span></div>
+    <div class="game-layout">
+      <section class="board-panel" aria-label="游戏区">
+        <div class="board-top"><span id="board-status" role="status">准备开始</span><span id="board-detail"></span></div>
+        <div class="canvas-wrap"><canvas id="board" width="480" height="480" tabindex="0" aria-label="游戏画面，请使用下方按钮或键盘操作"></canvas><div class="overlay" id="overlay"><h2 id="overlay-title">准备好了吗？</h2><p id="overlay-message">点击开始，轻松玩一局。</p><button class="button primary" id="overlay-start" type="button">开始游戏</button></div></div>
+        <div class="touch-controls" id="touch-controls" aria-label="触屏操作"></div>
+      </section>
+      <aside class="side-panel">
+        <section class="stats" aria-label="本局数据"><div><span id="score-label">得分</span><strong id="score">0</strong></div><div><span id="best-label">最佳</span><strong id="best">0</strong></div><dl id="metrics"></dl></section>
+        <section class="options"><label for="game-option" id="option-label">模式</label><select id="game-option"></select><p id="option-note">切换选项会重新开始。</p></section>
+        <div class="actions"><button class="button primary" id="start" type="button">开始游戏</button><button class="button" id="pause" type="button" disabled>暂停</button><div id="extra-actions"></div></div>
+        <section class="help"><h2>怎么玩</h2><p id="rules"></p><dl id="keyboard-help"></dl><p class="muted" id="game-note"></p></section>
+        <p class="muted" id="game-message" role="status"></p>
+      </aside>
+    </div>
+    <footer>简单玩一局，随时回大厅。<span>切换窗口会自动暂停</span></footer>
+  </main>
+  <dialog id="restart-dialog"><h2>重新开始？</h2><p>本局进度将重置。</p><div class="dialog-actions"><button class="button" id="cancel-restart" type="button">继续本局</button><button class="button primary" id="confirm-restart" type="button">重新开始</button></div></dialog>
+  <noscript>请启用浏览器的 JavaScript 后游玩。</noscript>
+</body>
+</html>

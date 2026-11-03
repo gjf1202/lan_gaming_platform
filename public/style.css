@@ -10,7 +10,7 @@ button { color: inherit; }
 button:disabled { cursor: wait; opacity: .5; }
 button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 [hidden] { display: none !important; }
-.sidebar { width: 204px; position: fixed; inset: 0 auto 0 0; background: #242529; border-right: 1px solid var(--line); padding: 30px 16px; display: flex; flex-direction: column; z-index: 2; }
+.sidebar { width: 204px; position: fixed; inset: 0 auto 0 0; background: #242529; border-right: 1px solid var(--line); padding: 30px 16px; display: flex; flex-direction: column; z-index: 2; overflow-y: auto; }
 .brand { display: flex; align-items: center; gap: 12px; margin: 0 11px 48px; font-weight: 650; letter-spacing: 1px; font-size: 18px; }
 .brand-mark { display: grid; place-items: center; width: 36px; height: 36px; border: 1px solid #61786d; border-radius: 8px; color: #b3cbbb; font: 22px Georgia, serif; background: #2d3834; }
 .brand-caption { display: block; font-size: 8px; letter-spacing: 2px; color: var(--muted); margin-top: 4px; font-weight: 500; }
@@ -126,3 +126,15 @@ dialog { border: 1px solid #454a46; border-radius: 8px; background: #27292c; col
 .nav-caption { font-size: 10px; letter-spacing: 1px; }
 .game-info p, .game-room-count { font-size: 11px; }
 .badge { font-size: 10px; }
+.arcade-section { margin-top: 35px; }
+.arcade-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.arcade-grid .game-card { display: grid; grid-template-columns: 130px minmax(0, 1fr); }
+.arcade-grid .game-art { height: 100%; min-height: 164px; border-bottom: 0; border-right: 1px solid var(--line); }
+.arcade-grid h3 { font-size: 15px; }
+.snake-art { background: #28332c; }.mini-snake { width: 94px; height: 80px; position: relative; }.mini-snake i { position: absolute; width: 21px; height: 21px; background: #7fa38b; border: 1px solid #afcab4; border-radius: 4px; }.mini-snake i:nth-child(1) { left: 0; top: 48px; }.mini-snake i:nth-child(2) { left: 0; top: 24px; }.mini-snake i:nth-child(3) { left: 24px; top: 24px; }.mini-snake i:nth-child(4) { left: 48px; top: 24px; }.mini-snake i:nth-child(5) { left: 48px; top: 0; background: #a6c6ae; }.mini-snake b { position: absolute; right: 0; top: 6px; width: 10px; height: 10px; border-radius: 50%; background: #c6b47d; }
+.tetris-art { background: #2c2b35; }.mini-tetris { position: relative; width: 94px; height: 68px; transform: rotate(-8deg); }.mini-tetris i { position: absolute; width: 28px; height: 28px; border-radius: 3px; background: #8e809e; border: 1px solid #bdaac9; }.mini-tetris i:nth-child(1) { left: 32px; top: 0; }.mini-tetris i:nth-child(2) { top: 32px; }.mini-tetris i:nth-child(3) { left: 32px; top: 32px; }.mini-tetris i:nth-child(4) { left: 64px; top: 32px; }
+.tank-art { background: #30332b; }.mini-tank { width: 60px; height: 66px; background: #7a8967; border: 1px solid #a9b593; border-radius: 3px; position: relative; box-shadow: -10px 0 #4e5946, 10px 0 #4e5946; transform: rotate(-12deg); }.mini-tank i { position: absolute; inset: 15px 11px; background: #4b5c42; border: 1px solid #a4b18c; }.mini-tank b { position: absolute; top: -20px; left: 25px; width: 9px; height: 50px; background: #a0b28a; }
+.sokoban-art { background: #343027; }.mini-box { width: 68px; height: 68px; display: grid; place-items: center; color: #c5ae84; background: #756447; border: 6px double #b49b71; border-radius: 4px; font-size: 60px; line-height: 1; transform: rotate(-8deg); box-shadow: 15px 10px 0 -5px #a4b88a25; }
+@media (min-width: 801px) and (max-height: 820px) { .sidebar { padding-top: 20px; }.brand { margin-bottom: 25px; }.games-caption { margin-top: 20px; }.nav-link { padding-block: 10px; }.sidebar-bottom { padding-top: 12px; } }
+@media (max-width: 950px) { .arcade-grid { grid-template-columns: 1fr; } }
+@media (max-width: 540px) { .arcade-grid .game-card { grid-template-columns: 112px minmax(0, 1fr); } }

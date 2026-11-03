@@ -1,0 +1,31 @@
+:root { color-scheme: dark; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif; background: #1e1f22; color: #d9dce2; --line: #383b41; --muted: #92969e; --accent: #9dbdab; }
+* { box-sizing: border-box; }
+body { margin: 0; min-width: 320px; }
+[hidden] { display: none !important; }
+a { color: inherit; text-decoration: none; }
+button, select { font: inherit; color: inherit; }
+button, select, a { -webkit-tap-highlight-color: transparent; }
+button, select { cursor: pointer; }
+button:disabled { opacity: .4; cursor: default; }
+button:focus-visible, a:focus-visible, select:focus-visible, canvas:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.topbar { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 20px 32px; border-bottom: 1px solid var(--line); background: #242529; }
+.brand { font-weight: 600; white-space: nowrap; }.brand span { color: var(--muted); font-size: 12px; margin-left: 12px; font-weight: 400; }
+nav { display: flex; gap: 8px; flex-wrap: wrap; }nav a { color: var(--muted); font-size: 12px; padding: 7px 10px; border-radius: 4px; }nav a:hover, nav a[aria-current] { color: #c2d6c8; background: #343d37; }
+main { max-width: 1120px; padding: 35px 30px 0; margin: auto; }
+.page-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 25px; gap: 20px; }.eyebrow { color: var(--accent); font-size: 11px; letter-spacing: 2px; margin: 0 0 10px; }h1 { font-size: 29px; font-weight: 550; margin: 0 0 9px; }.page-heading p:not(.eyebrow) { color: var(--muted); font-size: 13px; margin: 0; }.save-note { color: #737981; font-size: 11px; }
+.game-layout { display: grid; grid-template-columns: minmax(0, 1fr) 280px; align-items: start; gap: 25px; }
+.board-panel { border: 1px solid var(--line); border-radius: 7px; background: #24262a; overflow: hidden; min-width: 0; }
+.board-top { display: flex; justify-content: space-between; gap: 12px; font-size: 12px; color: #a8bbb0; padding: 15px 20px; border-bottom: 1px solid var(--line); }#board-detail { color: var(--muted); }
+.canvas-wrap { position: relative; background: #1b1d20; display: grid; place-items: center; min-height: 160px; }
+canvas { display: block; width: 100%; max-height: 66vh; object-fit: contain; touch-action: none; }
+.overlay { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 20px; background: #16191dd9; backdrop-filter: blur(2px); }h2 { font-size: 19px; font-weight: 550; margin: 0 0 12px; }.overlay p { color: #a4aaa9; font-size: 13px; max-width: 320px; line-height: 1.8; margin: 0 0 20px; }
+.button { background: #303238; border: 1px solid #45494f; border-radius: 4px; padding: 11px 16px; font-size: 12px; }.button:hover:not(:disabled) { border-color: #82998a; background: #39453d; }.button.primary { background: #456455; border-color: #5d7c68; color: #edf4ef; }
+.side-panel { display: flex; flex-direction: column; gap: 19px; }.stats { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; padding: 20px; border: 1px solid var(--line); border-radius: 6px; background: #26282c; }.stats > div > span { font-size: 11px; color: var(--muted); display: block; }.stats strong { display: block; margin-top: 8px; font: 27px ui-monospace, Consolas, monospace; color: #c8d8ce; }.stats dl { grid-column: 1 / -1; border-top: 1px solid var(--line); padding-top: 15px; display: grid; grid-template-columns: 1fr auto; gap: 9px; font-size: 12px; margin: 0; }dt { color: var(--muted); }dd { margin: 0; }#metrics:empty { display: none; }
+.options label { font-size: 12px; display: block; margin-bottom: 8px; }select { padding: 10px; border: 1px solid #45494f; border-radius: 4px; background: #26282c; width: 100%; }#option-note { font-size: 11px; color: #7c818a; margin: 7px 0 0; }
+.actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }#extra-actions { grid-column: 1 / -1; display: flex; gap: 10px; }#extra-actions .button { flex: 1; }
+.help { border-top: 1px solid var(--line); padding-top: 19px; }.help h2 { font-size: 13px; margin-bottom: 11px; }.help p { font-size: 12px; color: #a2a8b0; line-height: 1.9; margin: 0 0 13px; }.help dl { display: grid; grid-template-columns: auto 1fr; gap: 8px 14px; font-size: 11px; line-height: 1.7; margin: 0 0 15px; }.help dt { color: #c2cfc7; }.help dd { color: #8d939c; }.muted, .help .muted { color: #858b94; font-size: 11px; line-height: 1.8; margin: 0; }
+.touch-controls { display: flex; flex-wrap: wrap; justify-content: center; gap: 9px; padding: 14px 12px; border-top: 1px solid var(--line); }.touch-controls button { touch-action: none; user-select: none; -webkit-user-select: none; min-width: 49px; min-height: 44px; padding: 9px 13px; }.touch-controls .control-group { display: flex; gap: 7px; flex-wrap: wrap; justify-content: center; max-width: 100%; }.touch-controls .control-label { align-self: center; color: var(--muted); font-size: 10px; margin-right: 3px; }
+footer { display: flex; justify-content: space-between; gap: 12px; color: #737982; font-size: 11px; padding: 25px 0; }
+dialog { color: #d9dce2; border: 1px solid #535e56; border-radius: 7px; background: #27292d; max-width: min(400px, 90vw); padding: 25px; }dialog::backdrop { background: #0009; }dialog p { font-size: 12px; color: var(--muted); }.dialog-actions { display: flex; gap: 10px; justify-content: end; margin-top: 24px; }
+@media (max-width: 760px) { .topbar { padding: 15px 18px; flex-wrap: wrap; gap: 12px; }nav { gap: 2px; }nav a { padding: 6px 8px; }main { padding: 25px 16px 0; }.game-layout { grid-template-columns: 1fr; gap: 20px; }.side-panel { display: grid; grid-template-columns: 1fr 1fr; gap: 17px; }.help, #game-message { grid-column: 1 / -1; }.options { align-self: start; }.actions { grid-column: 1 / -1; }.page-heading { margin-bottom: 20px; }.save-note { display: none; }canvas { max-height: 60vh; }.stats { padding: 14px; gap: 12px; }.stats strong { font-size: 23px; }footer { flex-wrap: wrap; }.page-heading h1 { font-size: 26px; } }
+@media (prefers-reduced-motion: reduce) { .overlay { backdrop-filter: none; } }
