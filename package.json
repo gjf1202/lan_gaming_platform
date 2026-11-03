@@ -2,7 +2,7 @@
   "name": "lan-gaming-platform",
   "version": "1.0.0",
   "private": true,
-  "description": "Minimal LAN game lobby with Cards, Gomoku and Mahjong",
+  "description": "简约中文局域网游戏大厅，包含斗地主、五子棋和麻将",
   "type": "module",
   "scripts": { "start": "node server.mjs" },
   "engines": { "node": ">=18.2" }

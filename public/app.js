@@ -2,7 +2,7 @@ const byId = (id) => document.getElementById(id);
 const NAME_KEY = 'lan-player-name';
 const POLL_INTERVAL_MS = 3000;
 const TOAST_DURATION_MS = 3500;
-const GAME_NAMES = { ddz: 'Cards', wzq: 'Gomoku', mj: 'Mahjong' };
+const GAME_NAMES = { ddz: '斗地主', wzq: '五子棋', mj: '麻将' };
 const activeRooms = new Map();
 let lobby = { rooms: [], addresses: [] };
 let filter = 'all';
@@ -36,7 +36,7 @@ function element(tag, className = '', text = '') {
 async function requestJson(url, options = {}) {
   const response = await fetch(url, { cache: 'no-store', signal: AbortSignal.timeout(10000), ...options });
   const result = await response.json();
-  if (!response.ok) { throw Object.assign(new Error(result.error || 'Request failed.'), { status: response.status }); }
+  if (!response.ok) { throw Object.assign(new Error(result.error || '请求失败，请重试。'), { status: response.status }); }
   return result;
 }
 
@@ -51,11 +51,11 @@ function playerName() {
   const name = byId('player-name').value.trim();
   if (!name || [...name].length > 12 || /[\x00-\x1f\x7f]/.test(name)) {
     byId('player-name').focus();
-    throw new Error('Name: 1–12 characters.');
+    throw new Error('昵称需为 1–12 个字符。');
   }
   // A full-page game navigation needs storage to carry its session safely.
   try { localStorage.setItem(NAME_KEY, name); }
-  catch { throw new Error('Allow browser storage to enter.'); }
+  catch { throw new Error('请允许浏览器存储后加入。'); }
   return name;
 }
 
@@ -70,7 +70,7 @@ async function runAction(action) {
   if (busy) { return; }
   setBusy(true);
   try { await action(); }
-  catch (error) { toast(error.name === 'TypeError' || error.name === 'TimeoutError' ? 'Connection lost. Retry.' : error.message); }
+  catch (error) { toast(error.name === 'TypeError' || error.name === 'TimeoutError' ? '连接中断，请重试。' : error.message); }
   finally { setBusy(false); }
 }
 
@@ -112,7 +112,7 @@ async function enterRoom(game, code = '') {
   try { localStorage.setItem(sessionKey(game), result.token); }
   catch {
     await gameApi(game, 'leave', {}, result.token);
-    throw new Error('Allow browser storage to enter.');
+    throw new Error('请允许浏览器存储后加入。');
   }
   location.assign(`/games/${game}/`);
 }
@@ -138,11 +138,11 @@ function renderRooms(force = false) {
       row.append(element('td', '', value));
     }
     const statusCell = element('td');
-    const status = room.joinable ? 'Open' : room.players >= room.capacity && room.phase === 'waiting' ? 'Full' : room.phase === 'finished' ? 'Finished' : 'Playing';
+    const status = room.joinable ? '可加入' : room.players >= room.capacity && room.phase === 'waiting' ? '已满员' : room.phase === 'finished' ? '已结束' : '进行中';
     statusCell.append(element('span', `status-label${room.joinable ? '' : ' busy'}`, status));
     const actionCell = element('td');
     const ownRoom = activeRooms.get(room.game) === room.code;
-    const button = element('button', 'button small', ownRoom ? 'Continue →' : 'Join →');
+    const button = element('button', 'button small', ownRoom ? '继续 →' : '加入 →');
     button.type = 'button';
     button.dataset.unavailable = String(!online || (!room.joinable && !ownRoom));
     button.disabled = busy || button.dataset.unavailable === 'true';
@@ -156,8 +156,8 @@ function renderRooms(force = false) {
   }
   const empty = byId('empty-state');
   empty.hidden = rooms.length > 0;
-  empty.querySelector('strong').textContent = !online ? 'Lobby unavailable' : lobby.rooms.length ? 'No matching tables' : 'No tables yet';
-  empty.querySelector('p').textContent = !online ? 'Check the host. We will retry.' : 'Create a room and invite your friends.';
+  empty.querySelector('strong').textContent = !online ? '大厅暂时无法连接' : lobby.rooms.length ? '没有符合条件的房间' : '暂无房间';
+  empty.querySelector('p').textContent = !online ? '请检查主机，正在尝试重连。' : '创建房间，邀请好友一起玩。';
   byId('empty-create').hidden = !online;
 }
 
@@ -166,12 +166,12 @@ function renderLobby() {
   byId('player-count').textContent = online ? String(lobby.rooms.reduce((count, room) => count + room.online, 0)) : '—';
   for (const game of Object.keys(GAME_NAMES)) {
     const count = lobby.rooms.filter((room) => room.game === game).length;
-    byId(`${game}-count`).textContent = !online ? 'Unavailable' : count ? `${count} table${count === 1 ? '' : 's'}` : 'No rooms yet';
+    byId(`${game}-count`).textContent = !online ? '暂不可用' : count ? `${count} 个房间` : '暂无房间';
     byId(`${game}-continue`).hidden = !activeRooms.has(game);
   }
   const status = byId('server-status');
   status.classList.toggle('offline', !online);
-  status.replaceChildren(element('i', 'live-dot'), document.createTextNode(online ? 'LAN online' : 'Offline'));
+  status.replaceChildren(element('i', 'live-dot'), document.createTextNode(online ? '已连接' : '离线'));
   byId('network-error').hidden = online;
   renderRooms();
 }
@@ -217,17 +217,19 @@ byId('create-form').addEventListener('submit', (event) => {
 byId('quick-join').addEventListener('submit', (event) => {
   event.preventDefault();
   const code = byId('join-code').value.trim();
-  if (!/^\d{6}$/.test(code)) { toast('Enter a 6-digit code.'); return; }
+  if (!/^\d{6}$/.test(code)) { toast('请输入六位房间号。'); return; }
   void runAction(() => enterRoom(byId('join-game').value, code));
 });
 byId('join-code').addEventListener('input', () => {
+  byId('join-code').setCustomValidity('');
   byId('join-code').value = byId('join-code').value.replace(/\D/g, '').slice(0, 6);
 });
+byId('join-code').addEventListener('invalid', () => { byId('join-code').setCustomValidity('请输入六位房间号。'); });
 byId('refresh').addEventListener('click', () => { void refreshLobby(); });
 byId('copy-lobby').addEventListener('click', () => {
   const local = ['localhost', '127.0.0.1', '[::1]'].includes(location.hostname);
   const address = local ? lobby.addresses[0] || location.origin : location.origin;
-  void navigator.clipboard?.writeText(address).then(() => { toast('Lobby link copied.'); }).catch(() => { toast(address); });
+  void navigator.clipboard?.writeText(address).then(() => { toast('大厅链接已复制。'); }).catch(() => { toast(address); });
   if (!navigator.clipboard?.writeText) { toast(address); }
 });
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { void refreshLobby(); } });

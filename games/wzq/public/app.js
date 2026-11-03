@@ -47,10 +47,10 @@ async function api(path, payload = {}) {
       signal: controller.signal
     });
     const result = await response.json();
-    if (!response.ok) { throw Object.assign(new Error(result.error || 'Try again.'), { status: response.status }); }
+    if (!response.ok) { throw Object.assign(new Error(result.error || '请重试。'), { status: response.status }); }
     return result;
   } catch (error) {
-    if (error instanceof TypeError || error.name === 'AbortError') { throw new Error('Connection lost. Retry.'); }
+    if (error instanceof TypeError || error.name === 'AbortError') { throw new Error('连接中断，请重试。'); }
     throw error;
   } finally { clearTimeout(timer); }
 }
@@ -64,7 +64,7 @@ async function withBusy(task) {
 }
 function cleanName() {
   const name = byId('nickname').value.trim();
-  if (!name || [...name].length > 16) { byId('nickname').focus(); throw new Error('Name: 1–16 characters.'); }
+  if (!name || [...name].length > 16) { byId('nickname').focus(); throw new Error('昵称需为 1–16 个字符。'); }
   storageSet(NAME_KEY, name);
   return name;
 }
@@ -81,20 +81,20 @@ function enterRoom(result) {
   sessionToken = result.token || sessionToken;
   storageSet(SESSION_KEY, sessionToken);
   applyState(result.state);
-  setConnection(false, 'Connecting');
+  setConnection(false, '连接中');
   eventSource = new EventSource(`/games/wzq/events?token=${encodeURIComponent(sessionToken)}`);
-  eventSource.onopen = () => { connected = true; setConnection(true, 'Connected'); updateActions(); };
+  eventSource.onopen = () => { connected = true; setConnection(true, '已连接'); updateActions(); };
   eventSource.onmessage = event => {
     connected = true;
-    setConnection(true, 'Connected');
+    setConnection(true, '已连接');
     applyState(JSON.parse(event.data));
   };
   eventSource.onerror = () => {
     connected = false;
-    setConnection(false, 'Reconnecting');
+    setConnection(false, '重连中');
     updateActions();
     void api('resume').catch(error => {
-      if (error.status === 401) { exitRoom(); toast('Session expired. Rejoin.'); }
+      if (error.status === 401) { exitRoom(); toast('会话已过期，请重新加入。'); }
     });
   };
 }
@@ -118,7 +118,7 @@ function exitRoom() {
   connected = false;
   byId('game').hidden = true;
   byId('lobby').hidden = false;
-  setConnection(true, 'LAN');
+  setConnection(true, '局域网');
   history.replaceState(null, '', '/');
 }
 function prepareCanvas(canvas) {
@@ -212,10 +212,10 @@ function renderBoard() {
   const canvas = byId('board-canvas');
   renderGrid(canvas, state?.board || emptyBoard(), state?.lastMove, interactive);
   renderGrid(byId('preview-canvas'), previewBoard(), { row: 4, column: 5, color: 'white' }, false);
-  byId('match-label').textContent = !state ? 'Waiting' : state.phase === 'waiting' ? 'Waiting for player' : state.phase === 'finished' ? state.winner === null ? 'Draw' : 'Game over' : 'In progress';
-  byId('turn-label').textContent = !state ? 'Open a room to begin.' : state.phase === 'playing' ? state.turn === state.you ? 'Your turn' : `${state.players[state.turn]?.name || 'Opponent'} to move` : state.phase === 'finished' ? state.winner === null ? 'A full board.' : state.winner === state.you ? 'You win.' : `${state.players[state.winner]?.name || 'Opponent'} wins.` : state.players.filter(Boolean).length < 2 ? 'Invite one player.' : 'Both players ready up.';
+  byId('match-label').textContent = !state ? '等待中' : state.phase === 'waiting' ? '等待玩家加入' : state.phase === 'finished' ? state.winner === null ? '和棋' : '对局结束' : '进行中';
+  byId('turn-label').textContent = !state ? '创建房间开始对局。' : state.phase === 'playing' ? state.turn === state.you ? '轮到你了' : `轮到 ${state.players[state.turn]?.name || '对手'} 落子` : state.phase === 'finished' ? state.winner === null ? '棋盘已满，和棋。' : state.winner === state.you ? '你赢了！' : `${state.players[state.winner]?.name || '对手'} 获胜。` : state.players.filter(Boolean).length < 2 ? '邀请一位好友加入。' : '双方准备后开始。';
   byId('move-label').textContent = `${state?.moves.length || 0} / 225`;
-  const message = state?.phase === 'finished' ? state.winner === null ? 'Draw' : state.winner === state.you ? 'You win' : `${state.players[state.winner]?.name || 'Opponent'} wins` : state?.undoRequest ? state.undoRequest.to === state.you ? 'Undo request' : 'Undo pending' : '';
+  const message = state?.phase === 'finished' ? state.winner === null ? '和棋' : state.winner === state.you ? '你赢了' : `${state.players[state.winner]?.name || '对手'} 获胜` : state?.undoRequest ? state.undoRequest.to === state.you ? '悔棋请求' : '等待悔棋回应' : '';
   byId('board-message').textContent = message;
   byId('board-message').hidden = !message;
 }
@@ -235,8 +235,8 @@ function renderPlayers() {
     const row = element('div', `player-row${player && state.phase === 'playing' && state.turn === seat ? ' active' : ''}`);
     const stone = element('span', `player-stone ${seat === 0 ? 'black' : player ? 'white' : 'empty'}`);
     const info = element('div');
-    info.append(element('div', 'player-name', player?.name || 'Open seat'));
-    const status = !player ? 'Waiting' : !player.online ? 'Offline' : state.undoRequest?.from === seat ? 'Undo requested' : state.undoRequest?.to === seat ? 'Undo vote' : player.ready ? 'Ready' : state.phase === 'waiting' ? 'Not ready' : state.phase === 'finished' && state.rematchVotes.includes(seat) ? 'Rematch ready' : state.phase === 'finished' ? 'Finished' : state.phase === 'playing' && state.turn === seat ? 'Your turn' : state.phase === 'playing' ? 'Playing' : state.phase === 'finished' ? 'Finished' : 'Connected';
+    info.append(element('div', 'player-name', player?.name || '空位'));
+    const status = !player ? '等待中' : !player.online ? '离线' : state.undoRequest?.from === seat ? '已请求悔棋' : state.undoRequest?.to === seat ? '请回应悔棋' : player.ready ? '准备' : state.phase === 'waiting' ? '未准备' : state.phase === 'finished' && state.rematchVotes.includes(seat) ? '已准备再来一局' : state.phase === 'finished' ? '已结束' : state.phase === 'playing' && state.turn === seat ? '轮到你了' : state.phase === 'playing' ? '进行中' : state.phase === 'finished' ? '已结束' : '已连接';
     info.append(element('div', `player-status${player?.online === false ? ' offline' : ''}`, status));
     row.append(stone, info);
     if (player) { row.append(element('span', 'player-score', String(player.score))); }
@@ -249,40 +249,40 @@ function renderActions() {
   if (!state) { return; }
   const player = state.players[state.you];
   if (state.phase === 'waiting') {
-    const ready = element('button', `button ${player.ready ? 'secondary' : 'primary'}`, player.ready ? 'Unready' : 'Ready');
+    const ready = element('button', `button ${player.ready ? 'secondary' : 'primary'}`, player.ready ? '取消准备' : '准备');
     ready.type = 'button';
     ready.disabled = busy || !connected;
     ready.addEventListener('click', () => { void withBusy(async () => applyState((await api('ready', { ready: !player.ready })).state)); });
     bar.append(ready);
     if (state.host === state.you) {
-      const start = element('button', 'button primary', 'Start');
+      const start = element('button', 'button primary', '开始');
       start.type = 'button';
       start.disabled = busy || !connected || !state.players.every(entry => entry?.online && entry.ready);
       start.addEventListener('click', () => { void withBusy(async () => applyState((await api('start')).state)); });
       bar.append(start);
     }
-    byId('action-note').textContent = state.players.filter(Boolean).length < 2 ? 'One more player needed.' : state.players.every(entry => entry?.ready) ? 'Ready when you are.' : 'Both players must be ready.';
+    byId('action-note').textContent = state.players.filter(Boolean).length < 2 ? '还需一位玩家。' : state.players.every(entry => entry?.ready) ? '准备好就开始吧。' : '双方都需要准备。';
     return;
   }
   if (state.undoRequest) {
     if (state.undoRequest.to === state.you) {
-      addAction(bar, 'Accept', 'primary', async () => applyState((await api('undo/respond', { accept: true })).state));
-      addAction(bar, 'Decline', 'secondary', async () => applyState((await api('undo/respond', { accept: false })).state));
-      byId('action-note').textContent = 'Opponent asks to undo their last move.';
+      addAction(bar, '同意', 'primary', async () => applyState((await api('undo/respond', { accept: true })).state));
+      addAction(bar, '拒绝', 'secondary', async () => applyState((await api('undo/respond', { accept: false })).state));
+      byId('action-note').textContent = '对方申请撤回上一手。';
     } else {
-      addAction(bar, 'Cancel request', 'secondary', async () => applyState((await api('undo/respond', { cancel: true })).state));
-      byId('action-note').textContent = 'Waiting for opponent.';
+      addAction(bar, '取消申请', 'secondary', async () => applyState((await api('undo/respond', { cancel: true })).state));
+      byId('action-note').textContent = '等待对方回应。';
     }
     return;
   }
   if (state.phase === 'finished') {
     const ready = state.rematchVotes.includes(state.you);
-    addAction(bar, ready ? 'Cancel rematch' : 'Rematch', ready ? 'secondary' : 'primary', async () => applyState((await api('ready', { ready: !ready })).state));
-    byId('action-note').textContent = state.rematchVotes.length ? 'Waiting for opponent.' : 'Both players must agree.';
+    addAction(bar, ready ? '取消再来一局' : '再来一局', ready ? 'secondary' : 'primary', async () => applyState((await api('ready', { ready: !ready })).state));
+    byId('action-note').textContent = state.rematchVotes.length ? '等待对方回应。' : '双方同意后开始。';
     return;
   }
-  addAction(bar, 'Undo', 'secondary', async () => applyState((await api('undo/request')).state), state.moves.length === 0 || state.moves.at(-1).seat === state.you);
-  byId('action-note').textContent = state.turn === state.you ? state.you === 0 ? 'Black · your move.' : 'White · your move.' : 'Wait for your turn.';
+  addAction(bar, '悔棋', 'secondary', async () => applyState((await api('undo/request')).state), state.moves.length === 0 || state.moves.at(-1).seat === state.you);
+  byId('action-note').textContent = state.turn === state.you ? state.you === 0 ? '你执黑，请落子。' : '你执白，请落子。' : '等待对方落子。';
 }
 function addAction(container, label, style, action, disabled = false) {
   const button = element('button', `button ${style}`, label);
@@ -307,8 +307,8 @@ async function copyInvite() {
   const base = local ? info.addresses[0] || location.origin : location.origin;
   const invite = `${base}/games/wzq/?room=${state.code}`;
   try {
-    await navigator.clipboard.writeText(`${invite}\nCode: ${state.code}`);
-    toast('Invite copied.');
+    await navigator.clipboard.writeText(`${invite}\n房间号：${state.code}`);
+    toast('邀请链接已复制。');
   } catch {
     toast(`${base} · ${state.code}`);
   }
@@ -326,7 +326,7 @@ function placeFromPointer(event) {
   const xDistance = Math.abs(localX - (padding + column * spacing));
   const yDistance = Math.abs(localY - (padding + row * spacing));
   if (xDistance > spacing * 0.46 || yDistance > spacing * 0.46) { return; }
-  if (state.board[row][column] !== null) { toast('Square occupied.'); return; }
+  if (state.board[row][column] !== null) { toast('这里已有棋子。'); return; }
   void withBusy(async () => applyState((await api('move', { row, column })).state));
 }
 function setBusyButtons() {
@@ -352,7 +352,7 @@ byId('join-button').addEventListener('click', () => {
   let name;
   try { name = cleanName(); } catch (error) { toast(error.message); return; }
   const code = byId('room-code').value.trim();
-  if (!/^\d{6}$/.test(code)) { toast('Enter a 6-digit code.'); return; }
+  if (!/^\d{6}$/.test(code)) { toast('请输入六位房间号。'); return; }
   enterWithBusy(() => api('join', { name, code }));
 });
 byId('copy-room').addEventListener('click', () => { void copyInvite(); });

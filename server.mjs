@@ -9,9 +9,9 @@ import { createGameService as createMahjong } from './games/mj/service.mjs';
 import { fail, sendJson, rateLimit } from './lib/transport.mjs';
 
 export const GAME_CATALOG = [
-  { id: 'ddz', name: 'Cards', capacity: 3, description: 'One solo. One team.', path: '/games/ddz/' },
-  { id: 'wzq', name: 'Gomoku', capacity: 2, description: 'Five in a row.', path: '/games/wzq/' },
-  { id: 'mj', name: 'Mahjong', capacity: 4, description: 'Four seats. One table.', path: '/games/mj/' }
+  { id: 'ddz', name: '斗地主', capacity: 3, description: '一位地主，两位农民。', path: '/games/ddz/' },
+  { id: 'wzq', name: '五子棋', capacity: 2, description: '五子连珠，先到先赢。', path: '/games/wzq/' },
+  { id: 'mj', name: '麻将', capacity: 4, description: '四人一桌，摸打之间。', path: '/games/mj/' }
 ];
 
 const MIME_TYPES = { html: 'text/html', js: 'text/javascript', css: 'text/css' };
@@ -30,9 +30,9 @@ function validateOrigin(request) {
   if (!request.headers.origin) { return; }
   let origin;
   try { origin = new URL(request.headers.origin); }
-  catch { fail('Invalid origin.', 403); }
+  catch { fail('请求来源无效。', 403); }
   if (!['http:', 'https:'].includes(origin.protocol) || origin.host !== request.headers.host) {
-    fail('Invalid origin.', 403);
+    fail('请求来源无效。', 403);
   }
 }
 
@@ -85,19 +85,19 @@ export function createPlatform() {
           service.openEvents(request, response, url.searchParams.get('token'));
           return;
         }
-        if (request.method !== 'GET') { fail('Method not allowed.', 405); }
+        if (request.method !== 'GET') { fail('不支持此请求方式。', 405); }
         const filename = gamePath === '/' ? 'index.html' : gamePath.slice(1);
-        if (!GAME_ASSETS.has(filename)) { fail('Not found.', 404); }
+        if (!GAME_ASSETS.has(filename)) { fail('页面不存在。', 404); }
         await serveFile(response, new URL(`./games/${game}/public/${filename}`, import.meta.url), filename);
         return;
       }
-      if (request.method !== 'GET') { fail('Method not allowed.', 405); }
+      if (request.method !== 'GET') { fail('不支持此请求方式。', 405); }
       const filename = url.pathname === '/' ? 'index.html' : url.pathname.slice(1);
-      if (!ROOT_ASSETS.has(filename)) { fail('Not found.', 404); }
+      if (!ROOT_ASSETS.has(filename)) { fail('页面不存在。', 404); }
       await serveFile(response, new URL(`./public/${filename}`, import.meta.url), filename);
     } catch (error) {
       if (!error.status) { console.error('Request failed:', error); }
-      if (!response.headersSent) { sendJson(response, { error: error.status ? error.message : 'Server error. Retry.' }, error.status || 500); }
+      if (!response.headersSent) { sendJson(response, { error: error.status ? error.message : '服务异常，请重试。' }, error.status || 500); }
       else { response.end(); }
     }
   });
@@ -123,14 +123,14 @@ async function serveFile(response, url, filename) {
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const port = Number(process.env.PORT || 3000);
-  if (!Number.isInteger(port) || port < 1 || port > 65535) { throw new Error('PORT must be between 1 and 65535.'); }
+  if (!Number.isInteger(port) || port < 1 || port > 65535) { throw new Error('端口必须为 1 到 65535 之间的整数。'); }
   const platform = createPlatform();
   platform.server.on('error', (error) => {
-    console.error(error.code === 'EADDRINUSE' ? `Port ${port} busy. Choose another PORT.` : error.message);
+    console.error(error.code === 'EADDRINUSE' ? `端口 ${port} 已占用，请通过 PORT 选择其他端口。` : error.message);
     process.exitCode = 1;
   });
   platform.server.listen(port, '0.0.0.0', () => {
-    console.log(`\n  LAN · Game Lobby\n  Local: http://localhost:${port}\n${lanAddresses(port).map((address) => `  LAN: ${address}`).join('\n')}\n\n  Share one LAN address. All three games are ready.\n  Keep this window open. Ctrl+C to stop.\n`);
+    console.log(`\n  局域网游戏大厅\n  本机地址：http://localhost:${port}\n${lanAddresses(port).map((address) => `  局域网地址：${address}`).join('\n')}\n\n  分享局域网地址，即可一起玩三款游戏。\n  请保持此窗口运行，按 Ctrl+C 停止服务。\n`);
   });
   process.on('SIGINT', () => { platform.close(); });
   process.on('SIGTERM', () => { platform.close(); });

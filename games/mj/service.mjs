@@ -32,7 +32,7 @@ export function createGameService() {
 
   function makeRoom(name) {
     if (rooms.size >= MAX_ROOMS) {
-      fail('Server full. Try later.', 503);
+      fail('房间数量已满，请稍后再试。', 503);
     }
     let code;
     do {
@@ -48,14 +48,14 @@ export function createGameService() {
     room.players[0] = player;
     rooms.set(code, room);
     bindSession(room, player);
-    addLog(room, `${name} opened a table.`);
+    addLog(room, `${name} 创建了牌桌。`);
     return { room, player };
   }
 
   function requireSession(token) {
     const session = typeof token === 'string' ? sessions.get(token) : null;
     if (!session) {
-      fail('Session expired. Rejoin.', 401);
+      fail('会话已过期，请重新加入。', 401);
     }
     return session;
   }
@@ -106,14 +106,14 @@ export function createGameService() {
       }
     }
     room.players[room.dealer].hand.push(room.wall.pop());
-    addLog(room, `${room.players[room.dealer].name} deals. East starts.`);
+    addLog(room, `${room.players[room.dealer].name} 坐庄，东家先出。`);
   }
 
   function draw(room, seat) {
     if (room.wall.length === 0) {
       room.phase = 'finished';
       room.winner = null;
-      addLog(room, 'Wall empty. Draw game.');
+      addLog(room, '牌墙已空，本局流局。');
       return false;
     }
     room.players[seat].hand.push(room.wall.pop());
@@ -124,10 +124,10 @@ export function createGameService() {
 
   function discard(room, player, tile) {
     if (room.phase !== 'playing' || room.turn !== player.seat) {
-      fail('Wait your turn.');
+      fail('请等待你的回合。');
     }
     if (!validateTile(tile) || !player.hand.includes(tile)) {
-      fail('Invalid tile.');
+      fail('手牌无效。');
     }
     player.hand.splice(player.hand.indexOf(tile), 1);
     player.discards.push({ tile, claimed: false });
@@ -141,27 +141,27 @@ export function createGameService() {
         room.claimResponses[other.seat] = true;
       }
     }
-    addLog(room, `${player.name} discards a tile.`);
+    addLog(room, `${player.name} 打出一张牌。`);
     settleClaims(room);
   }
 
   function chooseClaim(room, player, type, tiles = []) {
     if (room.phase !== 'claim') {
-      fail('No tile to claim.');
+      fail('当前无法吃碰杠胡。');
     }
     const options = getClaimOptions(room, player.seat);
     let choice = { seat: player.seat, type, tiles: [] };
     if (type === 'chi') {
       if (!Array.isArray(tiles) || tiles.length !== 2) {
-        fail('Choose a sequence.');
+        fail('请选择顺子。');
       }
       const key = `chi:${tiles.join(',')}`;
       if (!options.includes(key)) {
-        fail('That sequence is not available.');
+        fail('无法组成该顺子。');
       }
       choice.tiles = tiles;
     } else if (type !== 'pass' && !options.includes(type)) {
-      fail('That claim is not available.');
+      fail('当前无法执行此操作。');
     }
     room.claimResponses[player.seat] = true;
     if (type !== 'pass') {
@@ -196,12 +196,12 @@ export function createGameService() {
     if (claim.type === 'hu') {
       room.phase = 'finished';
       room.winner = claim.seat;
-      addLog(room, `${claimer.name} wins on discard.`);
+      addLog(room, `${claimer.name} 胡牌。`);
       return;
     }
     const removed = removeTiles(claimer.hand, claim.type === 'chi' ? claim.tiles : Array(claim.type === 'kong' ? 3 : 2).fill(discardedTile));
     if (!removed) {
-      fail('Claim tiles changed.');
+      fail('手牌已变化，请重试。');
     }
     claimer.hand = removed;
     const claimedTiles = claim.type === 'chi'
@@ -214,7 +214,7 @@ export function createGameService() {
     room.lastDiscard = null;
     room.claimResponses = Array(PLAYER_COUNT).fill(false);
     room.claimChoices = [];
-    addLog(room, `${claimer.name} claims ${claim.type}.`);
+    addLog(room, `${claimer.name} ${ { chi: '吃', pung: '碰', kong: '杠' }[claim.type] || '响应'}。`);
     if (claim.type === 'kong') {
       draw(room, claim.seat);
     }
@@ -222,14 +222,14 @@ export function createGameService() {
 
   function concealedKong(room, player, tile) {
     if (room.phase !== 'playing' || room.turn !== player.seat || !getSelfOptions(room, player.seat).kong.includes(tile)) {
-      fail('Kong is not available.');
+      fail('当前不能杠牌。');
     }
     if (tile.startsWith('upgrade:')) {
       const upgradedTile = tile.slice('upgrade:'.length);
       const remaining = removeTiles(player.hand, [upgradedTile]);
       const meld = player.melds.find((entry) => entry.type === 'pung' && entry.tiles[0] === upgradedTile);
       if (!remaining || !meld) {
-        fail('Kong is not available.');
+        fail('当前不能杠牌。');
       }
       player.hand = remaining;
       meld.type = 'kong';
@@ -238,7 +238,7 @@ export function createGameService() {
       player.hand = removeTiles(player.hand, Array(4).fill(tile));
       player.melds.push({ type: 'kong', tiles: Array(4).fill(tile), open: false });
     }
-    addLog(room, `${player.name} declares kong.`);
+    addLog(room, `${player.name} 杠牌。`);
     draw(room, player.seat);
   }
 
@@ -267,7 +267,7 @@ export function createGameService() {
       other.melds = [];
       other.discards = [];
     }
-    addLog(room, 'A player left. Table reset.');
+    addLog(room, '有玩家离开，牌桌已重置。');
     push(room);
   }
 
@@ -281,23 +281,23 @@ export function createGameService() {
     if (path === '/api/join') {
       const room = rooms.get(String(body.code));
       if (!room) {
-        fail('Room not found.', 404);
+        fail('房间不存在。', 404);
       }
       if (room.phase !== 'waiting') {
-        fail('Game already started.');
+        fail('牌局已开始。');
       }
       const seat = room.players.findIndex((player) => !player);
       if (seat < 0) {
-        fail('Table full.');
+        fail('牌桌已满。');
       }
       const name = validName(body.name);
       if (room.players.some((player) => player?.name.toLowerCase() === name.toLowerCase())) {
-        fail('Name taken.');
+        fail('昵称已被使用。');
       }
       const player = createPlayer(name, seat);
       room.players[seat] = player;
       bindSession(room, player);
-      addLog(room, `${name} joined the table.`);
+      addLog(room, `${name} 加入了牌桌。`);
       push(room);
       sendJson(response, { token: player.token, state: roomView(room, player) });
       return;
@@ -317,7 +317,7 @@ export function createGameService() {
     }
     if (path === '/api/ready') {
       if (!['waiting', 'finished'].includes(room.phase) || typeof body.ready !== 'boolean') {
-        fail('Cannot change ready state.');
+        fail('当前无法更改准备状态。');
       }
       player.ready = body.ready;
       if (room.phase === 'finished' && room.players.every((entry) => entry.ready)) {
@@ -327,10 +327,10 @@ export function createGameService() {
       push(room);
     } else if (path === '/api/start') {
       if (room.host !== player.seat || room.phase !== 'waiting') {
-        fail('Host only.');
+        fail('仅房主可操作。');
       }
       if (!room.players.every((entry) => entry?.online && entry.ready)) {
-        fail('All four players must be ready.');
+        fail('四位玩家都需要准备。');
       }
       startGame(room);
       push(room);
@@ -345,14 +345,14 @@ export function createGameService() {
       push(room);
     } else if (path === '/api/hu') {
       if (room.phase !== 'playing' || room.turn !== player.seat || !canWin(player.hand, player.melds.length)) {
-        fail('Hu is not available.');
+        fail('当前不能胡牌。');
       }
       room.phase = 'finished';
       room.winner = player.seat;
-      addLog(room, `${player.name} wins on self draw.`);
+      addLog(room, `${player.name} 自摸胡牌。`);
       push(room);
     } else {
-      fail('Unknown action.', 404);
+      fail('未知操作。', 404);
     }
     sendJson(response, { state: roomView(room, player) });
   }

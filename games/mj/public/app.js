@@ -1,7 +1,7 @@
 const SESSION_KEY = 'lan-mj-session';
 const SUITS = { m: '萬', p: '筒', s: '條' };
 const HONOR_NAMES = { w1: '東', w2: '南', w3: '西', w4: '北', d1: '中', d2: '發', d3: '白' };
-const WINDS = ['East', 'South', 'West', 'North'];
+const WINDS = ['东', '南', '西', '北'];
 const ui = Object.fromEntries([
   'lobby', 'game', 'nickname', 'room-code', 'create-tab', 'join-tab', 'create-panel', 'join-panel',
   'create-button', 'join-button', 'room-number', 'copy-room', 'leave-button', 'wall-label',
@@ -33,9 +33,9 @@ const mahjongAlerts = (() => {
   }
 
   function updateButton() {
-    button.textContent = enabled ? 'Alerts on' : 'Alerts off';
+    button.textContent = enabled ? '提醒已开' : '提醒已关';
     button.setAttribute('aria-pressed', String(enabled));
-    button.title = enabled ? 'Turn and claim alerts on' : 'Turn and claim alerts off';
+    button.title = enabled ? '出牌及吃碰杠胡提醒已开启' : '出牌及吃碰杠胡提醒已关闭';
   }
 
   function clearDisplay() {
@@ -55,12 +55,12 @@ const mahjongAlerts = (() => {
     const discardCount = state.players.reduce((total, player) => total + (player?.discards.length || 0), 0);
     const handKey = `${state.code}/${state.you}/${state.dealer}/${state.wallCount}/${discardCount}`;
     if (state.phase === 'playing' && state.turn === state.you) {
-      return { key: `${handKey}/turn/${state.hand.join(',')}`, message: 'Your turn.' };
+      return { key: `${handKey}/turn/${state.hand.join(',')}`, message: '轮到你了。' };
     }
     if (state.phase === 'claim' && state.claimOptions.length > 0 && !state.claimResponses[state.you]) {
       return {
         key: `${handKey}/claim/${state.lastDiscard?.seat}/${state.lastDiscard?.tile}/${state.claimOptions.join(',')}`,
-        message: state.claimOptions.includes('hu') ? 'Hu available.' : 'Claim tile.'
+        message: state.claimOptions.includes('hu') ? '可以胡牌。' : '可以吃碰杠。'
       };
     }
     return null;
@@ -71,8 +71,8 @@ const mahjongAlerts = (() => {
       return;
     }
     try {
-      systemNotification = new Notification(`MJ · ${message}`, {
-        body: `Room ${latestState.code}`,
+      systemNotification = new Notification(`麻将 · ${message}`, {
+        body: `房间 ${latestState.code}`,
         tag: `mj-${latestState.code}`
       });
       systemNotification.onclick = () => {
@@ -118,7 +118,7 @@ const mahjongAlerts = (() => {
     updateButton();
     if (!enabled) {
       refresh();
-      showToast('Alerts off.');
+      showToast('提醒已关闭。');
       return;
     }
     // Request permission only in response to the Alerts button, on secure origins.
@@ -133,7 +133,7 @@ const mahjongAlerts = (() => {
       return;
     }
     const systemAllowed = window.isSecureContext && 'Notification' in window && Notification.permission === 'granted';
-    showToast(systemAllowed ? 'Alerts on.' : 'Tab alerts on.');
+    showToast(systemAllowed ? '提醒已开启。' : '页签提醒已开启。');
     refresh(true);
   }
 
@@ -175,7 +175,7 @@ async function api(path, body = {}) {
   });
   const result = await response.json();
   if (!response.ok) {
-    throw new Error(result.error || 'Request failed.');
+    throw new Error(result.error || '请求失败，请重试。');
   }
   if (result.token) {
     sessionToken = result.token;
@@ -201,7 +201,7 @@ function connectEvents() {
   eventSource = new EventSource(`/games/mj/events?token=${encodeURIComponent(sessionToken)}`);
   eventSource.onopen = () => {
     ui.connectionDot.parentElement.classList.remove('offline');
-    ui.connectionLabel.textContent = 'ONLINE';
+    ui.connectionLabel.textContent = '在线';
   };
   eventSource.onmessage = (event) => {
     setState(JSON.parse(event.data));
@@ -209,7 +209,7 @@ function connectEvents() {
   eventSource.onerror = () => {
     mahjongAlerts.updateState(null);
     ui.connectionDot.parentElement.classList.add('offline');
-    ui.connectionLabel.textContent = 'RECONNECT';
+    ui.connectionLabel.textContent = '重连中';
   };
 }
 
@@ -231,9 +231,9 @@ async function runAction(path, body = {}) {
 function render() {
   const state = currentState;
   ui.roomNumber.textContent = state.code;
-  ui.wallLabel.textContent = `WALL ${state.wallCount}`;
-  ui.phaseLabel.textContent = ({ waiting: 'Waiting', playing: 'In progress', claim: 'Claim tile', finished: 'Hand over' })[state.phase];
-  ui.selfSeat.textContent = `${WINDS[(state.you - state.dealer + 4) % 4]} · SEAT ${state.you + 1}`;
+  ui.wallLabel.textContent = `牌墙 ${state.wallCount}`;
+  ui.phaseLabel.textContent = ({ waiting: '等待中', playing: '进行中', claim: '等待响应', finished: '本局结束' })[state.phase];
+  ui.selfSeat.textContent = `${WINDS[(state.you - state.dealer + 4) % 4]} · ${state.you + 1}号位`;
   renderSeats(state);
   renderDiscards(state);
   renderHand(state);
@@ -253,21 +253,21 @@ function renderSeats(state) {
     number.textContent = String(seat + 1);
     const name = document.createElement('span');
     name.className = 'seat-name';
-    name.textContent = player ? player.name : 'Open seat';
+    name.textContent = player ? player.name : '空位';
     const meta = document.createElement('span');
     meta.className = 'seat-meta';
     const windLabel = document.createElement('span');
     windLabel.className = seat === state.dealer ? 'dealer' : '';
-    windLabel.textContent = seat === state.dealer ? `${wind} · DEALER` : wind;
+    windLabel.textContent = seat === state.dealer ? `${wind} · 庄家` : wind;
     meta.append(windLabel);
     if (player && state.phase !== 'waiting') {
       const count = document.createElement('span');
       count.className = 'tile-count';
-      count.textContent = `${player.handCount} tiles`;
+      count.textContent = `${player.handCount} 张`;
       meta.append(count);
     } else if (player) {
       const ready = document.createElement('span');
-      ready.textContent = player.ready ? 'READY' : player.online ? 'HERE' : 'OFFLINE';
+      ready.textContent = player.ready ? '已准备' : player.online ? '在线' : '离线';
       meta.append(ready);
     }
     seatElement.append(number, name, meta);
@@ -300,15 +300,15 @@ function renderDiscards(state) {
     }
   }
   if (state.phase === 'claim' && state.lastDiscard) {
-    ui.tableMessage.textContent = `${state.players[state.lastDiscard.seat].name} discarded ${tileParts(state.lastDiscard.tile).main}${tileParts(state.lastDiscard.tile).sub}.`;
+    ui.tableMessage.textContent = `${state.players[state.lastDiscard.seat].name} 打出 ${tileParts(state.lastDiscard.tile).main}${tileParts(state.lastDiscard.tile).sub}。`;
   } else if (state.phase === 'finished') {
-    ui.tableMessage.textContent = state.winner === null ? 'Draw game.' : `${state.players[state.winner].name} wins.`;
+    ui.tableMessage.textContent = state.winner === null ? '流局。' : `${state.players[state.winner].name} 胡牌。`;
   } else if (state.phase === 'waiting') {
-    ui.tableMessage.textContent = `Ready up · ${state.players.filter(Boolean).length}/4 seats`;
+    ui.tableMessage.textContent = `请准备 · ${state.players.filter(Boolean).length}/4 人已入座`;
   } else {
-    ui.tableMessage.textContent = state.turn === state.you ? 'Your turn · draw complete' : `${state.players[state.turn]?.name || 'Player'} to move.`;
+    ui.tableMessage.textContent = state.turn === state.you ? '已摸牌，请出牌' : `等待 ${state.players[state.turn]?.name || '玩家'} 出牌。`;
   }
-  ui.turnLabel.textContent = state.phase === 'playing' ? `${state.players[state.turn]?.name || 'Player'} · ${WINDS[(state.turn - state.dealer + 4) % 4]}` : '';
+  ui.turnLabel.textContent = state.phase === 'playing' ? `${state.players[state.turn]?.name || '玩家'} · ${WINDS[(state.turn - state.dealer + 4) % 4]}` : '';
 }
 
 function renderHand(state) {
@@ -320,7 +320,7 @@ function renderHand(state) {
     const parts = tileParts(tile);
     button.type = 'button';
     button.className = `hand-tile${parts.red ? ' red' : ''}${index > 0 && state.hand[index - 1][0] !== tile[0] ? ' gap' : ''}`;
-    button.setAttribute('aria-label', `Discard ${parts.main}${parts.sub}`);
+    button.setAttribute('aria-label', `打出 ${parts.main}${parts.sub}`);
     button.disabled = !canDiscard;
     const main = document.createElement('span');
     main.textContent = parts.main;
@@ -345,7 +345,7 @@ function renderMelds(state) {
     }
     const label = document.createElement('span');
     label.className = 'meld-label';
-    label.textContent = meld.type;
+    label.textContent = meld.type === 'kong' && !meld.open ? '暗杠' : ({ chi: '吃', pung: '碰', kong: '杠' })[meld.type] || '副露';
     meldElement.append(label);
     ui.melds.append(meldElement);
   }
@@ -364,51 +364,51 @@ function renderActions(state) {
   ui.actions.replaceChildren();
   if (state.phase === 'waiting') {
     const player = state.players[state.you];
-    addAction(player.ready ? 'Not ready' : 'Ready', () => runAction('ready', { ready: !player.ready }), { primary: !player.ready });
+    addAction(player.ready ? '未准备' : '准备', () => runAction('ready', { ready: !player.ready }), { primary: !player.ready });
     const allReady = state.players.length === 4 && state.players.every((entry) => entry?.ready && entry.online);
     if (state.host === state.you) {
-      addAction('Start', () => runAction('start'), { primary: true });
+      addAction('开始', () => runAction('start'), { primary: true });
       ui.actions.lastElementChild.disabled = !allReady;
     }
     return;
   }
   if (state.phase === 'finished') {
     const player = state.players[state.you];
-    addAction(player.ready ? 'Ready' : 'Next hand', () => runAction('ready', { ready: !player.ready }), { primary: !player.ready });
+    addAction(player.ready ? '准备' : '下一局', () => runAction('ready', { ready: !player.ready }), { primary: !player.ready });
     return;
   }
   if (state.phase === 'claim') {
     if (state.claimOptions.length === 0) {
       const pending = state.claimResponses.some((responded, seat) => seat !== state.you && !responded);
-      ui.tableMessage.textContent += pending ? ' · Waiting for claims' : '';
+      ui.tableMessage.textContent += pending ? ' · 等待吃碰杠胡回应' : '';
       return;
     }
     if (state.claimOptions.includes('hu')) {
-      addAction('Hu', () => runAction('claim', { type: 'hu' }), { primary: true });
+      addAction('胡', () => runAction('claim', { type: 'hu' }), { primary: true });
     }
     if (state.claimOptions.includes('kong')) {
-      addAction('Kong', () => runAction('claim', { type: 'kong' }), { primary: true });
+      addAction('杠', () => runAction('claim', { type: 'kong' }), { primary: true });
     }
     if (state.claimOptions.includes('pung')) {
-      addAction('Pung', () => runAction('claim', { type: 'pung' }));
+      addAction('碰', () => runAction('claim', { type: 'pung' }));
     }
     for (const option of state.claimOptions.filter((entry) => entry.startsWith('chi:'))) {
       const tiles = option.slice(4).split(',');
-      addAction(`Chi · ${tiles.map((tile) => tileParts(tile).main + tileParts(tile).sub).join(' ')}`, () => runAction('claim', { type: 'chi', tiles }));
+      addAction(`吃 · ${tiles.map((tile) => tileParts(tile).main + tileParts(tile).sub).join(' ')}`, () => runAction('claim', { type: 'chi', tiles }));
     }
-    addAction('Pass', () => runAction('claim', { type: 'pass' }));
+    addAction('过', () => runAction('claim', { type: 'pass' }));
     return;
   }
   if (state.phase === 'playing' && state.turn === state.you) {
     if (state.selfOptions.hu) {
-      addAction('Hu', () => runAction('hu'), { primary: true });
+      addAction('胡', () => runAction('hu'), { primary: true });
     }
     for (const tile of state.selfOptions.kong) {
-      const label = tile.startsWith('upgrade:') ? 'Upgrade Kong' : `Kong · ${tileParts(tile).main}${tileParts(tile).sub}`;
+      const label = tile.startsWith('upgrade:') ? '补杠' : `杠 · ${tileParts(tile).main}${tileParts(tile).sub}`;
       addAction(label, () => runAction('kong', { tile }));
     }
     if (!state.selfOptions.hu && state.selfOptions.kong.length === 0) {
-      ui.actions.textContent = 'Select a tile to discard.';
+      ui.actions.textContent = '点击手牌出牌。';
       ui.actions.classList.add('action-note');
     }
   }
@@ -447,12 +447,12 @@ ui.copyRoom.addEventListener('click', async () => {
     const invite = `${address}/games/mj/?room=${currentState.code}`;
     try {
       await navigator.clipboard.writeText(invite);
-      showToast('Invite copied.');
+      showToast('邀请链接已复制。');
     } catch {
       showToast(invite);
     }
   } catch (error) {
-    showToast('Connection lost. Retry.');
+    showToast('连接中断，请重试。');
   }
 });
 ui.leaveButton.addEventListener('click', () => ui.leaveDialog.showModal());

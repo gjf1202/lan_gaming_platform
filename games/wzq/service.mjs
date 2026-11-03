@@ -39,7 +39,7 @@ export function createGameService() {
   }
   function push(room) { pushRoom(room, sessions, view); }
   function makeRoom(name) {
-    if (rooms.size >= MAX_ROOMS) { fail('Server full. Try later.', 503); }
+    if (rooms.size >= MAX_ROOMS) { fail('房间数量已满，请稍后再试。', 503); }
     let code;
     do { code = String(randomInt(100000, 1000000)); } while (rooms.has(code));
     const room = {
@@ -49,12 +49,12 @@ export function createGameService() {
     };
     rooms.set(code, room);
     bindSession(room, room.players[0]);
-    log(room, `${name} created room`);
+    log(room, `${name} 创建了房间`);
     return room;
   }
   function requireSession(value) {
     const session = typeof value === 'string' ? sessions.get(value) : null;
-    if (!session) { fail('Session expired. Rejoin.', 401); }
+    if (!session) { fail('会话已过期，请重新加入。', 401); }
     return session;
   }
   function validCoordinate(value) { return Number.isInteger(value) && value >= 0 && value < BOARD_SIZE; }
@@ -84,12 +84,12 @@ export function createGameService() {
     room.undoRequest = null;
     room.rematchVotes = [];
     for (const player of room.players) { player.ready = false; }
-    log(room, 'New game. Black moves first.');
+    log(room, '新对局开始，黑棋先行。');
   }
   function roomAction(room, player, path, body) {
     if (path === '/api/ready') {
-      if (!['waiting', 'finished'].includes(room.phase)) { fail('Game in progress.'); }
-      if (typeof body.ready !== 'boolean') { fail('Invalid ready state.'); }
+      if (!['waiting', 'finished'].includes(room.phase)) { fail('对局进行中。'); }
+      if (typeof body.ready !== 'boolean') { fail('准备状态无效。'); }
       player.ready = body.ready;
       if (room.phase === 'finished') {
         if (body.ready) { room.rematchVotes = [...new Set([...room.rematchVotes, player.seat])]; }
@@ -99,18 +99,18 @@ export function createGameService() {
       return;
     }
     if (path === '/api/start') {
-      if (room.host !== player.seat) { fail('Host only.'); }
-      if (room.phase !== 'waiting') { fail('Game in progress.'); }
-      if (!room.players.every(entry => entry?.online && entry.ready)) { fail('Both players must be ready.'); }
+      if (room.host !== player.seat) { fail('仅房主可操作。'); }
+      if (room.phase !== 'waiting') { fail('对局进行中。'); }
+      if (!room.players.every(entry => entry?.online && entry.ready)) { fail('双方都需要准备。'); }
       startGame(room);
       return;
     }
     if (path === '/api/move') {
-      if (room.phase !== 'playing') { fail('Game is not active.'); }
-      if (room.undoRequest) { fail('Undo pending.'); }
-      if (room.turn !== player.seat) { fail('Wait your turn.'); }
-      if (!validCoordinate(body.row) || !validCoordinate(body.column)) { fail('Invalid square.'); }
-      if (room.board[body.row][body.column] !== null) { fail('Square occupied.'); }
+      if (room.phase !== 'playing') { fail('对局尚未开始。'); }
+      if (room.undoRequest) { fail('请先处理悔棋请求。'); }
+      if (room.turn !== player.seat) { fail('请等待你的回合。'); }
+      if (!validCoordinate(body.row) || !validCoordinate(body.column)) { fail('落点无效。'); }
+      if (room.board[body.row][body.column] !== null) { fail('这里已有棋子。'); }
       const color = player.seat === 0 ? 'black' : 'white';
       room.board[body.row][body.column] = color;
       const move = { row: body.row, column: body.column, color, seat: player.seat, name: player.name };
@@ -119,14 +119,14 @@ export function createGameService() {
         room.phase = 'finished';
         room.winner = player.seat;
         player.score++;
-        log(room, `${player.name} wins`);
+        log(room, `${player.name} 获胜`);
       } else if (room.moves.length === BOARD_SIZE * BOARD_SIZE) {
         room.phase = 'finished';
         room.winner = null;
-        log(room, 'Draw.');
+        log(room, '和棋。');
       } else {
         room.turn = nextSeat(player.seat);
-        log(room, `${color === 'black' ? 'Black' : 'White'} · ${body.column + 1}, ${body.row + 1}`);
+        log(room, `${color === 'black' ? '黑棋' : '白棋'} · ${body.column + 1}, ${body.row + 1}`);
       }
       room.undoRequest = null;
       room.rematchVotes = [];
@@ -134,36 +134,36 @@ export function createGameService() {
       return;
     }
     if (path === '/api/undo/request') {
-      if (room.phase !== 'playing') { fail('Game is not active.'); }
-      if (room.undoRequest) { fail('Undo already pending.'); }
-      if (room.moves.length === 0) { fail('Nothing to undo.'); }
-      if (room.moves.at(-1).seat === player.seat) { fail('No opponent move to undo.'); }
+      if (room.phase !== 'playing') { fail('对局尚未开始。'); }
+      if (room.undoRequest) { fail('已有悔棋请求。'); }
+      if (room.moves.length === 0) { fail('暂无可撤回的落子。'); }
+      if (room.moves.at(-1).seat === player.seat) { fail('暂无对方落子可撤回。'); }
       room.undoRequest = { from: player.seat, to: nextSeat(player.seat) };
-      log(room, `${player.name} requests undo`);
+      log(room, `${player.name} 申请悔棋`);
       return;
     }
     if (path === '/api/undo/respond') {
-      if (!room.undoRequest) { fail('No undo request.'); }
+      if (!room.undoRequest) { fail('没有待处理的悔棋请求。'); }
       const requesterCancels = body.cancel === true && room.undoRequest.from === player.seat;
-      if (!requesterCancels && room.undoRequest.to !== player.seat) { fail('No undo request.'); }
+      if (!requesterCancels && room.undoRequest.to !== player.seat) { fail('没有待处理的悔棋请求。'); }
       const accepted = !requesterCancels && body.accept === true;
       if (accepted) {
         const move = room.moves.pop();
         room.board[move.row][move.column] = null;
         room.turn = move.seat;
-        log(room, 'Undo accepted.');
-      } else { log(room, requesterCancels ? 'Undo cancelled.' : 'Undo declined.'); }
+        log(room, '已同意悔棋。');
+      } else { log(room, requesterCancels ? '已取消悔棋。' : '已拒绝悔棋。'); }
       room.undoRequest = null;
       return;
     }
-    fail('Unknown action.', 404);
+    fail('未知操作。', 404);
   }
   function removePlayer(room, player) {
     const session = sessions.get(player.token);
     sessions.delete(player.token);
     if (session?.stream) { session.stream.end(); }
     room.players[player.seat] = null;
-    log(room, `${player.name} left`);
+    log(room, `${player.name} 离开了房间`);
     const remaining = room.players.filter(Boolean);
     if (remaining.length === 0) { rooms.delete(room.code); return; }
     if (room.host === player.seat) { room.host = remaining[0].seat; }
@@ -175,7 +175,7 @@ export function createGameService() {
     room.undoRequest = null;
     room.rematchVotes = [];
     remaining.forEach(entry => { entry.ready = false; });
-    log(room, 'Opponent left. Game reset.');
+    log(room, '对方已离开，对局已重置。');
     push(room);
   }
   async function api(request, response, path) {
@@ -188,14 +188,14 @@ export function createGameService() {
     if (path === '/api/join') {
       const name = validName(body.name);
       const room = rooms.get(String(body.code));
-      if (!room) { fail('Room not found.', 404); }
+      if (!room) { fail('房间不存在。', 404); }
       const seat = room.players.findIndex(entry => !entry);
-      if (seat < 0) { fail('Room full.'); }
-      if (room.players.some(entry => entry?.name === name)) { fail('Name taken.'); }
+      if (seat < 0) { fail('房间已满。'); }
+      if (room.players.some(entry => entry?.name === name)) { fail('昵称已被使用。'); }
       const player = newPlayer(name, seat);
       room.players[seat] = player;
       bindSession(room, player);
-      log(room, `${name} joined`);
+      log(room, `${name} 加入了房间`);
       push(room);
       sendJson(response, { token: player.token, state: view(room, player) });
       return;
@@ -205,7 +205,7 @@ export function createGameService() {
     rateLimit(session);
     if (path === '/api/resume') { sendJson(response, { state: view(room, player) }); return; }
     if (path === '/api/leave') { removePlayer(room, player); sendJson(response, { ok: true }); return; }
-    if (!room.players.every(Boolean) && path !== '/api/resume') { fail('Waiting for another player.'); }
+    if (!room.players.every(Boolean) && path !== '/api/resume') { fail('等待另一位玩家加入。'); }
     roomAction(room, player, path, body);
     push(room);
     sendJson(response, { state: view(room, player) });

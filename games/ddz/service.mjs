@@ -48,7 +48,7 @@ export function createGameService() {
     sessions.set(player.token, { room, player, stream: null, requests: [] });
   }
   function makeRoom(name, practice) {
-    if (rooms.size >= MAX_ROOMS) { fail('Server full. Try later.', 503); }
+    if (rooms.size >= MAX_ROOMS) { fail('房间数量已满，请稍后再试。', 503); }
     let code;
     do { code = String(randomInt(100000, 1000000)); } while (rooms.has(code));
     const room = {
@@ -58,17 +58,17 @@ export function createGameService() {
       passes: 0, round: 0, log: [], winner: null, result: null, updatedAt: Date.now(), deadline: 0
     };
     if (practice) {
-      room.players[1] = newPlayer('Bot N', 1, true);
-      room.players[2] = newPlayer('Bot S', 2, true);
+      room.players[1] = newPlayer('机器人甲', 1, true);
+      room.players[2] = newPlayer('机器人乙', 2, true);
     }
     rooms.set(code, room);
     bindSession(room, room.players[0]);
-    log(room, `${name} created room`);
+    log(room, `${name} 创建了房间`);
     return room;
   }
   function requireSession(value) {
     const session = typeof value === 'string' ? sessions.get(value) : null;
-    if (!session) { fail('Session expired. Rejoin.', 401); }
+    if (!session) { fail('会话已过期，请重新加入。', 401); }
     return session;
   }
   function startRound(room) {
@@ -86,7 +86,7 @@ export function createGameService() {
       player.bid = null; player.playCount = 0; player.ready = false;
     });
     setTurn(room, (room.round - 1) % PLAYER_COUNT);
-    log(room, `Round ${room.round}: bid`);
+    log(room, `第 ${room.round} 局：开始叫分`);
   }
   function assignLandlord(room) {
     room.landlord = room.bidder;
@@ -95,17 +95,17 @@ export function createGameService() {
     player.hand = sortCards([...player.hand, ...room.bottom]);
     room.phase = 'playing';
     setTurn(room, room.landlord);
-    log(room, `${player.name}: solo · ${room.bid}`);
+    log(room, `${player.name} 成为地主 · ${room.bid} 分`);
   }
   function bid(room, player, value) {
-    if (room.phase !== 'bidding' || room.turn !== player.seat) { fail('Wait your turn.'); }
-    if (!Number.isInteger(value) || value < 0 || value > 3 || (value !== 0 && value <= room.bid)) { fail('Bid higher or pass.'); }
+    if (room.phase !== 'bidding' || room.turn !== player.seat) { fail('请等待你的回合。'); }
+    if (!Number.isInteger(value) || value < 0 || value > 3 || (value !== 0 && value <= room.bid)) { fail('请叫更高分或不叫。'); }
     player.bid = value;
     room.bidCount++;
     if (value > room.bid) { room.bid = value; room.bidder = player.seat; }
-    log(room, `${player.name} ${value ? `bids ${value}` : 'passes'}`, 'bid');
+    log(room, `${player.name} ${value ? `叫 ${value} 分` : '不叫'}`, 'bid');
     if (value === 3 || room.bidCount === PLAYER_COUNT) {
-      if (room.bidder === null) { log(room, 'No bids. Redealing.'); startRound(room); }
+      if (room.bidder === null) { log(room, '无人叫分，重新发牌。'); startRound(room); }
       else { assignLandlord(room); }
       return;
     }
@@ -125,16 +125,16 @@ export function createGameService() {
       entry.ready = entry.bot;
       return delta;
     }) };
-    log(room, `${landlordWon ? 'Solo' : 'Team'} wins${spring ? ' · Sweep ×2' : ''}`);
+    log(room, `${landlordWon ? '地主' : '农民'}获胜${spring ? ' · 春天 ×2' : ''}`);
   }
   function play(room, player, ids) {
-    if (room.phase !== 'playing' || room.turn !== player.seat) { fail('Wait your turn.'); }
-    if (!Array.isArray(ids) || ids.length === 0 || ids.length > 20 || new Set(ids).size !== ids.length || ids.some(id => typeof id !== 'string')) { fail('Select cards.'); }
+    if (room.phase !== 'playing' || room.turn !== player.seat) { fail('请等待你的回合。'); }
+    if (!Array.isArray(ids) || ids.length === 0 || ids.length > 20 || new Set(ids).size !== ids.length || ids.some(id => typeof id !== 'string')) { fail('请先选牌。'); }
     const selected = ids.map(id => player.hand.find(card => card.id === id));
-    if (selected.some(card => !card)) { fail('Invalid selection.'); }
+    if (selected.some(card => !card)) { fail('选牌无效。'); }
     const target = room.lastPlay?.pattern || null;
     const resolved = resolvePlay(selected, target);
-    if (!resolved) { fail(target ? 'Invalid play or too low.' : 'Invalid combination.'); }
+    if (!resolved) { fail(target ? '牌型不符或点数不够。' : '牌型无效。'); }
     player.hand = player.hand.filter(card => !ids.includes(card.id));
     room.playedCards.push(...selected);
     player.playCount++;
@@ -142,17 +142,17 @@ export function createGameService() {
     room.table[player.seat] = { cards: sortCards(selected), text: resolved.name };
     room.passes = 0;
     if (resolved.type === 'bomb' || resolved.type === 'rocket') { room.multiplier *= 2; }
-    log(room, `${player.name}: ${resolved.name}${player.hand.length <= 2 ? ` · ${player.hand.length} left` : ''}`, resolved.type === 'bomb' || resolved.type === 'rocket' ? 'bomb' : 'card');
+    log(room, `${player.name}: ${resolved.name}${player.hand.length <= 2 ? ` · 剩余 ${player.hand.length} 张` : ''}`, resolved.type === 'bomb' || resolved.type === 'rocket' ? 'bomb' : 'card');
     if (player.hand.length === 0) { finishRound(room, player); return; }
     setTurn(room, nextSeat(room.turn));
     room.table[room.turn] = null;
   }
   function pass(room, player) {
-    if (room.phase !== 'playing' || room.turn !== player.seat) { fail('Wait your turn.'); }
-    if (!room.lastPlay || room.lastPlay.seat === player.seat) { fail('Play to lead.'); }
-    room.table[player.seat] = { cards: [], text: 'Pass' };
+    if (room.phase !== 'playing' || room.turn !== player.seat) { fail('请等待你的回合。'); }
+    if (!room.lastPlay || room.lastPlay.seat === player.seat) { fail('本轮由你先出，不能不要。'); }
+    room.table[player.seat] = { cards: [], text: '不要' };
     room.passes++;
-    log(room, `${player.name} passes`, 'pass');
+    log(room, `${player.name} 不要`, 'pass');
     if (room.passes === 2) {
       const leader = room.lastPlay.seat;
       room.lastPlay = null; room.passes = 0;
@@ -193,13 +193,13 @@ export function createGameService() {
       room.landlord = null; room.bottom = []; room.lastPlay = null; room.table = [null, null, null]; room.playedCards = [];
       room.result = null; room.winner = null; room.turn = null; room.bid = 0; room.multiplier = 1;
       for (const entry of room.players.filter(Boolean)) { entry.hand = []; entry.ready = entry.bot; entry.bid = null; }
-      log(room, 'Player left. Round cancelled.');
+      log(room, '有玩家离开，本局已取消。');
     }
     const session = sessions.get(player.token);
     sessions.delete(player.token);
     if (session?.stream) { session.stream.end(); }
     room.players[player.seat] = null;
-    log(room, `${player.name} left`);
+    log(room, `${player.name} 离开了房间`);
     const humans = room.players.filter(entry => entry && !entry.bot);
     if (humans.length === 0) { deleteRoom(room); return; }
     if (room.host === player.seat) { room.host = humans[0].seat; }
@@ -215,14 +215,14 @@ export function createGameService() {
     if (path === '/api/join') {
       const name = validName(body.name, 12);
       const room = rooms.get(String(body.code));
-      if (!room || room.practice) { fail('Room not found.', 404); }
+      if (!room || room.practice) { fail('房间不存在。', 404); }
       const seat = room.players.findIndex(player => !player);
-      if (seat < 0) { fail('Room full.'); }
-      if (room.players.some(player => player?.name === name)) { fail('Name taken.'); }
+      if (seat < 0) { fail('房间已满。'); }
+      if (room.players.some(player => player?.name === name)) { fail('昵称已被使用。'); }
       const player = newPlayer(name, seat);
       room.players[seat] = player;
       bindSession(room, player);
-      log(room, `${name} joined`);
+      log(room, `${name} 加入了房间`);
       push(room);
       json(response, { token: player.token, state: view(room, player) });
       return;
@@ -233,23 +233,23 @@ export function createGameService() {
     if (path === '/api/resume') { json(response, { state: view(room, player) }); return; }
     if (path === '/api/leave') { removePlayer(room, player); json(response, { ok: true }); return; }
     if (path === '/api/ready') {
-      if (!['waiting', 'finished'].includes(room.phase)) { fail('Round in progress.'); }
-      if (typeof body.ready !== 'boolean') { fail('Invalid ready state.'); }
+      if (!['waiting', 'finished'].includes(room.phase)) { fail('本局进行中。'); }
+      if (typeof body.ready !== 'boolean') { fail('准备状态无效。'); }
       player.ready = body.ready;
     } else if (path === '/api/start') {
-      if (room.host !== player.seat) { fail('Host only.'); }
-      if (!['waiting', 'finished'].includes(room.phase)) { fail('Round in progress.'); }
-      if (!room.players.every(entry => entry?.ready && entry.online)) { fail('All 3 must be ready.'); }
+      if (room.host !== player.seat) { fail('仅房主可操作。'); }
+      if (!['waiting', 'finished'].includes(room.phase)) { fail('本局进行中。'); }
+      if (!room.players.every(entry => entry?.ready && entry.online)) { fail('三位玩家都需要准备。'); }
       startRound(room);
     } else if (path === '/api/bid') { bid(room, player, body.value); }
     else if (path === '/api/play') { play(room, player, body.ids); }
     else if (path === '/api/pass') { pass(room, player); }
     else if (path === '/api/hint') {
-      if (room.phase !== 'playing' || room.turn !== player.seat) { fail('Wait your turn.'); }
+      if (room.phase !== 'playing' || room.turn !== player.seat) { fail('请等待你的回合。'); }
       const moves = legalMoves(player.hand, room.lastPlay?.pattern || null);
       json(response, { moves: moves.slice(0, 80).map(move => move.cards.map(card => card.id)) });
       return;
-    } else { fail('Unknown action.', 404); }
+    } else { fail('未知操作。', 404); }
     push(room);
     json(response, { state: view(room, player) });
   }

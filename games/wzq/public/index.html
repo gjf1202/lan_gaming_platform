@@ -1,11 +1,11 @@
 <!doctype html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#1e1f22">
-  <meta name="description" content="A quiet game of Five in a Row. Two players, one LAN.">
-  <title>LAN · Gomoku</title>
+  <meta name="description" content="两人对弈的局域网五子棋。">
+  <title>游戏厅 · 五子棋</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%232b2d30'/%3E%3Ccircle cx='32' cy='32' r='17' fill='%23dddfe5'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="/games/wzq/style.css">
   <link rel="stylesheet" href="/platform.css">
@@ -13,80 +13,80 @@
   <script src="/games/wzq/app.js" defer></script>
 </head>
 <body data-platform-game="wzq">
-  <nav class="platform-bar" aria-label="Platform"><a class="platform-home" href="/">▦ <strong>LAN</strong> <span>/ Lobby</span></a><div class="platform-games"><a href="/games/ddz/" >Cards</a><a href="/games/wzq/" aria-current="page">Gomoku</a><a href="/games/mj/" >Mahjong</a></div></nav>
+  <nav class="platform-bar" aria-label="游戏平台"><a class="platform-home" href="/">▦ <strong>游戏厅</strong> <span>/ 大厅</span></a><div class="platform-games"><a href="/games/ddz/" >斗地主</a><a href="/games/wzq/" aria-current="page">五子棋</a><a href="/games/mj/" >麻将</a></div></nav>
   <header class="app-header">
-    <a class="brand" href="/" aria-label="WZQ home"><span class="brand-mark"><i></i></span><span class="brand-name">WZQ</span><span class="brand-divider"></span><span class="brand-subtitle">FIVE IN A ROW</span></a>
-    <div class="header-right"><span class="connection"><i id="connection-dot"></i><span id="connection-label">LAN</span></span><span class="header-separator"></span><span class="board-spec">15 × 15</span></div>
+    <a class="brand" href="/" aria-label="返回大厅"><span class="brand-mark"><i></i></span><span class="brand-name">五子棋</span><span class="brand-divider"></span><span class="brand-subtitle">五子连珠</span></a>
+    <div class="header-right"><span class="connection"><i id="connection-dot"></i><span id="connection-label">游戏厅</span></span><span class="header-separator"></span><span class="board-spec">15 × 15</span></div>
   </header>
 
   <main id="lobby" class="lobby">
     <section class="lobby-panel">
-      <div class="eyebrow"><span class="tiny-line"></span>01 / FIND A TABLE</div>
-      <h1>One board.<br>Two minds.</h1>
-      <p class="intro-copy">Take a quiet break.<br>Five in a row takes the game.</p>
+      <div class="eyebrow"><span class="tiny-line"></span>01 / 找个房间</div>
+      <h1>一方棋盘，<br>两人对弈。</h1>
+      <p class="intro-copy">放松片刻，静心对弈。<br>五子连珠，即可获胜。</p>
       <div class="entry-panel">
-        <label class="field-label" for="nickname">Your name <span>UP TO 12 CHARACTERS</span></label>
-        <input id="nickname" maxlength="12" autocomplete="nickname" placeholder="Enter name">
-        <div class="entry-tabs" role="tablist" aria-label="Room actions">
-          <button id="create-tab" class="entry-tab active" role="tab" aria-selected="true" aria-controls="create-panel">Create</button>
-          <button id="join-tab" class="entry-tab" role="tab" aria-selected="false" aria-controls="join-panel">Join</button>
+        <label class="field-label" for="nickname">你的昵称 <span>最多12个字符</span></label>
+        <input id="nickname" maxlength="12" autocomplete="nickname" placeholder="请输入昵称">
+        <div class="entry-tabs" role="tablist" aria-label="房间操作">
+          <button id="create-tab" class="entry-tab active" role="tab" aria-selected="true" aria-controls="create-panel">创建</button>
+          <button id="join-tab" class="entry-tab" role="tab" aria-selected="false" aria-controls="join-panel">加入</button>
         </div>
         <div id="create-panel" role="tabpanel" aria-labelledby="create-tab">
-          <p class="field-note">Open a room. Share the code.</p>
-          <button id="create-button" class="button primary full" type="button">Create room <span aria-hidden="true">↗</span></button>
+          <p class="field-note">创建房间，把房间号发给好友。</p>
+          <button id="create-button" class="button primary full" type="button">创建房间 <span aria-hidden="true">↗</span></button>
         </div>
         <div id="join-panel" role="tabpanel" aria-labelledby="join-tab" hidden>
-          <label class="sr-only" for="room-code">Six-digit room code</label>
-          <input id="room-code" class="code-input" inputmode="numeric" maxlength="6" pattern="[0-9]{6}" placeholder="Six-digit code" autocomplete="off">
-          <button id="join-button" class="button primary full" type="button">Join room <span aria-hidden="true">↗</span></button>
+          <label class="sr-only" for="room-code">六位房间号</label>
+          <input id="room-code" class="code-input" inputmode="numeric" maxlength="6" pattern="[0-9]{6}" placeholder="六位房间号" autocomplete="off">
+          <button id="join-button" class="button primary full" type="button">加入房间 <span aria-hidden="true">↗</span></button>
         </div>
-        <div class="entry-footer"><span>2 players</span><span class="entry-footer-divider"></span><span>Same Wi-Fi</span><span class="entry-footer-divider"></span><span>No sign-up</span></div>
+        <div class="entry-footer"><span>2人对战</span><span class="entry-footer-divider"></span><span>同一网络</span><span class="entry-footer-divider"></span><span>无需注册</span></div>
       </div>
     </section>
-    <section class="lobby-preview" aria-label="Gomoku board preview">
-      <div class="preview-head"><span><i></i>THE BOARD</span><span>15 × 15</span></div>
-      <canvas id="preview-canvas" class="preview-canvas" aria-label="Board preview"></canvas>
-      <div class="preview-foot"><span>BLACK MOVES FIRST</span><span>FIVE TO WIN</span></div>
+    <section class="lobby-preview" aria-label="五子棋棋盘预览">
+      <div class="preview-head"><span><i></i>棋盘</span><span>15 × 15</span></div>
+      <canvas id="preview-canvas" class="preview-canvas" aria-label="棋盘预览"></canvas>
+      <div class="preview-foot"><span>黑棋先行</span><span>五子连珠获胜</span></div>
     </section>
   </main>
 
   <main id="game" class="game" hidden>
     <div class="game-heading">
-      <div class="room-heading"><span class="eyebrow">ROOM</span><strong id="room-number"></strong><button id="copy-room" class="text-button" type="button">Copy invite</button></div>
-      <button id="leave-button" class="text-button danger" type="button">Leave room</button>
+      <div class="room-heading"><span class="eyebrow">房间</span><strong id="room-number"></strong><button id="copy-room" class="text-button" type="button">复制邀请</button></div>
+      <button id="leave-button" class="text-button danger" type="button">退出房间</button>
     </div>
     <div class="play-layout">
-      <section class="board-panel" aria-label="Five in a Row board">
-        <div class="board-topline"><span><i class="live-dot"></i><span id="match-label">Waiting</span></span><span class="board-meta">15 × 15 <span class="meta-divider"></span> FREESTYLE</span></div>
-        <div class="canvas-wrap"><canvas id="board-canvas" aria-label="Gomoku board. Click or tap an empty intersection to play."></canvas><div id="board-message" class="board-message" aria-live="polite" hidden></div></div>
+      <section class="board-panel" aria-label="五子棋棋盘">
+        <div class="board-topline"><span><i class="live-dot"></i><span id="match-label">等待中</span></span><span class="board-meta">15 × 15 <span class="meta-divider"></span> 自由规则</span></div>
+        <div class="canvas-wrap"><canvas id="board-canvas" aria-label="五子棋棋盘，点击空白交叉点落子。"></canvas><div id="board-message" class="board-message" aria-live="polite" hidden></div></div>
         <div class="board-footer"><span id="turn-label"></span><span id="move-label" class="move-label"></span></div>
       </section>
       <aside class="side-panel">
         <section class="players-section">
-          <div class="section-heading"><h2>PLAYERS</h2><span>02</span></div>
+          <div class="section-heading"><h2>玩家</h2><span>02</span></div>
           <div id="players" class="players-list"></div>
         </section>
         <section class="actions-section">
-          <div class="section-heading"><h2>TABLE</h2></div>
+          <div class="section-heading"><h2>牌桌</h2></div>
           <div id="actions" class="actions"></div>
           <p id="action-note" class="action-note"></p>
         </section>
         <details class="history-section">
-          <summary>Move history <span>RECENT</span></summary>
+          <summary>落子记录 <span>最近记录</span></summary>
           <ol id="move-history"></ol>
         </details>
-        <div class="game-note"><span class="note-mark">●</span><span>Five or more in a row wins.</span></div>
+        <div class="game-note"><span class="note-mark">●</span><span>连续五子或以上即可获胜。</span></div>
       </aside>
     </div>
   </main>
 
-  <footer class="app-footer"><span>A small game for a shared break.</span><span>WZQ <i></i> LOCAL NETWORK</span></footer>
+  <footer class="app-footer"><span>闲暇片刻，一起对弈。</span><span>五子棋 <i></i> 局域网对战</span></footer>
   <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 
   <dialog id="leave-dialog" class="modal compact-modal">
-    <div class="modal-heading"><h2>Leave table?</h2></div>
-    <p>The room will be reset for the other player.</p>
-    <div class="modal-actions"><button id="cancel-leave" class="button secondary" type="button">Stay</button><button id="confirm-leave" class="button primary" type="button">Leave</button></div>
+    <div class="modal-heading"><h2>退出牌桌？</h2></div>
+    <p>退出后，对方的对局将被重置。</p>
+    <div class="modal-actions"><button id="cancel-leave" class="button secondary" type="button">留下</button><button id="confirm-leave" class="button primary" type="button">退出</button></div>
   </dialog>
 </body>
 </html>

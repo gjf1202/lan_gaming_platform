@@ -1,74 +1,74 @@
 <!doctype html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#1e1f22">
-  <meta name="description" content="Three games. One local lobby. Play together on your LAN.">
-  <title>LAN · Play</title>
+  <meta name="description" content="斗地主、五子棋、麻将，一个大厅畅玩局域网。">
+  <title>局域网游戏大厅</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%232b2d30'/%3E%3Cpath d='M20 16v32h27' fill='none' stroke='%239cb9aa' stroke-width='6'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="/style.css">
   <script src="/app.js" defer></script>
 </head>
 <body>
   <aside class="sidebar">
-    <a class="brand" href="/" aria-label="LAN home"><span class="brand-mark">L</span><span>LAN<span class="brand-caption">GAME LOBBY</span></span></a>
-    <div class="nav-caption">WORKSPACE</div>
-    <nav aria-label="Main navigation">
-      <a class="nav-link active" href="#top"><span>▦</span> Lobby <span class="nav-count">03</span></a>
-      <a class="nav-link" href="#rooms"><span>☷</span> Rooms</a>
+    <a class="brand" href="/" aria-label="返回大厅"><span class="brand-mark">游</span><span>游戏厅<span class="brand-caption">局域网游戏大厅</span></span></a>
+    <div class="nav-caption">游戏空间</div>
+    <nav aria-label="主导航">
+      <a class="nav-link active" href="#top"><span>▦</span> 大厅 <span class="nav-count">03</span></a>
+      <a class="nav-link" href="#rooms"><span>☷</span> 房间列表</a>
     </nav>
-    <div class="nav-caption games-caption">GAMES</div>
-    <nav aria-label="Game navigation">
-      <a class="nav-link" href="/games/ddz/"><span class="nav-glyph">♠</span> Cards <small>3P</small></a>
-      <a class="nav-link" href="/games/wzq/"><span class="nav-glyph">●</span> Gomoku <small>2P</small></a>
-      <a class="nav-link" href="/games/mj/"><span class="nav-glyph">東</span> Mahjong <small>4P</small></a>
+    <div class="nav-caption games-caption">游戏</div>
+    <nav aria-label="游戏导航">
+      <a class="nav-link" href="/games/ddz/"><span class="nav-glyph">♠</span> 斗地主 <small>3人</small></a>
+      <a class="nav-link" href="/games/wzq/"><span class="nav-glyph">●</span> 五子棋 <small>2人</small></a>
+      <a class="nav-link" href="/games/mj/"><span class="nav-glyph">東</span> 麻将 <small>4人</small></a>
     </nav>
-    <div class="sidebar-bottom"><span class="live-dot"></span><span>Same network.<br><small>Good company.</small></span></div>
+    <div class="sidebar-bottom"><span class="live-dot"></span><span>同一局域网<br><small>好友一起玩</small></span></div>
   </aside>
   <div class="workspace" id="top">
     <header class="topbar">
-      <div class="breadcrumb">Workspace <span>/</span> <strong>Lobby</strong></div>
-      <div class="topbar-right"><span class="server-status" id="server-status" role="status"><i class="live-dot"></i> Connecting</span><label class="player-label" for="player-name">Player</label><input id="player-name" aria-label="Player name" maxlength="12" placeholder="Your name" autocomplete="nickname"></div>
+      <div class="breadcrumb">游戏空间 <span>/</span> <strong>大厅</strong></div>
+      <div class="topbar-right"><span class="server-status" id="server-status" role="status"><i class="live-dot"></i> 连接中</span><label class="player-label" for="player-name">昵称</label><input id="player-name" aria-label="玩家昵称" maxlength="12" placeholder="你的昵称" autocomplete="nickname"></div>
     </header>
     <main>
       <section class="welcome" aria-labelledby="welcome-title">
-        <div><div class="eyebrow">A LITTLE BREAK, TOGETHER</div><h1 id="welcome-title">Pick a game. Take a seat.</h1><p>One local lobby for your next round.</p></div>
-        <button class="button primary" id="create-room" type="button"><span>＋</span> Create room</button>
+        <div><div class="eyebrow">和好友，一起放松片刻</div><h1 id="welcome-title">选个游戏，开一局。</h1><p>三款经典游戏，一个局域网大厅。</p></div>
+        <button class="button primary" id="create-room" type="button"><span>＋</span> 创建房间</button>
       </section>
-      <section class="summary" aria-label="Lobby summary"><span><strong>03</strong> games</span><span><strong id="room-count">—</strong> rooms</span><span><strong id="player-count">—</strong> in game</span><button class="text-button invite-button" id="copy-lobby" type="button">Copy lobby link <span>↗</span></button></section>
+      <section class="summary" aria-label="大厅概况"><span><strong>03</strong> 款游戏</span><span><strong id="room-count">—</strong> 个房间</span><span><strong id="player-count">—</strong> 人在玩</span><button class="text-button invite-button" id="copy-lobby" type="button">复制大厅链接 <span>↗</span></button></section>
       <section aria-labelledby="games-title">
-        <div class="section-heading"><h2 id="games-title">The collection</h2><span class="muted">No downloads for guests</span></div>
+        <div class="section-heading"><h2 id="games-title">全部游戏</h2><span class="muted">打开浏览器，即可加入</span></div>
         <div class="game-grid">
           <article class="game-card" data-game="ddz">
-            <a class="game-art cards-art" href="/games/ddz/" aria-label="Open Cards"><div class="playing-card card-back"></div><div class="playing-card card-middle">K<span>♠</span></div><div class="playing-card card-front">A<span>♠</span><small>A</small></div><span class="art-index">01 / CARDS</span></a>
-            <div class="game-info"><div class="game-title"><h3>Cards</h3><span class="badge">3 PLAYERS</span></div><p>One solo. One team. Every card counts.</p><div class="game-footer"><span class="game-room-count" id="ddz-count">No rooms yet</span><button class="button small" data-create="ddz" type="button">Create <span>↗</span></button></div><a class="continue-link" id="ddz-continue" href="/games/ddz/" hidden>Continue your room →</a></div>
+            <a class="game-art cards-art" href="/games/ddz/" aria-label="打开斗地主"><div class="playing-card card-back"></div><div class="playing-card card-middle">K<span>♠</span></div><div class="playing-card card-front">A<span>♠</span><small>A</small></div><span class="art-index">01 / 斗地主</span></a>
+            <div class="game-info"><div class="game-title"><h3>斗地主</h3><span class="badge">3人对战</span></div><p>地主对农民，默契见真章。</p><div class="game-footer"><span class="game-room-count" id="ddz-count">暂无房间</span><button class="button small" data-create="ddz" type="button">创建 <span>↗</span></button></div><a class="continue-link" id="ddz-continue" href="/games/ddz/" hidden>继续原来的房间 →</a></div>
           </article>
           <article class="game-card" data-game="wzq">
-            <a class="game-art board-art" href="/games/wzq/" aria-label="Open Gomoku"><div class="mini-board"><i class="stone dark stone-1"></i><i class="stone light stone-2"></i><i class="stone dark stone-3"></i><i class="stone light stone-4"></i><i class="stone dark stone-5"></i></div><span class="art-index">02 / GOMOKU</span></a>
-            <div class="game-info"><div class="game-title"><h3>Gomoku</h3><span class="badge">2 PLAYERS</span></div><p>A quiet board. Five in a row.</p><div class="game-footer"><span class="game-room-count" id="wzq-count">No rooms yet</span><button class="button small" data-create="wzq" type="button">Create <span>↗</span></button></div><a class="continue-link" id="wzq-continue" href="/games/wzq/" hidden>Continue your room →</a></div>
+            <a class="game-art board-art" href="/games/wzq/" aria-label="打开五子棋"><div class="mini-board"><i class="stone dark stone-1"></i><i class="stone light stone-2"></i><i class="stone dark stone-3"></i><i class="stone light stone-4"></i><i class="stone dark stone-5"></i></div><span class="art-index">02 / 五子棋</span></a>
+            <div class="game-info"><div class="game-title"><h3>五子棋</h3><span class="badge">2人对战</span></div><p>黑白交错，五子连珠。</p><div class="game-footer"><span class="game-room-count" id="wzq-count">暂无房间</span><button class="button small" data-create="wzq" type="button">创建 <span>↗</span></button></div><a class="continue-link" id="wzq-continue" href="/games/wzq/" hidden>继续原来的房间 →</a></div>
           </article>
           <article class="game-card" data-game="mj">
-            <a class="game-art tiles-art" href="/games/mj/" aria-label="Open Mahjong"><div class="mini-tiles"><span>東</span><span>南</span><span>發</span></div><span class="art-index">03 / MAHJONG</span></a>
-            <div class="game-info"><div class="game-title"><h3>Mahjong</h3><span class="badge">4 PLAYERS</span></div><p>Draw, discard, and find your hand.</p><div class="game-footer"><span class="game-room-count" id="mj-count">No rooms yet</span><button class="button small" data-create="mj" type="button">Create <span>↗</span></button></div><a class="continue-link" id="mj-continue" href="/games/mj/" hidden>Continue your room →</a></div>
+            <a class="game-art tiles-art" href="/games/mj/" aria-label="打开麻将"><div class="mini-tiles"><span>東</span><span>南</span><span>發</span></div><span class="art-index">03 / 麻将</span></a>
+            <div class="game-info"><div class="game-title"><h3>麻将</h3><span class="badge">4人对战</span></div><p>摸打之间，等一手好牌。</p><div class="game-footer"><span class="game-room-count" id="mj-count">暂无房间</span><button class="button small" data-create="mj" type="button">创建 <span>↗</span></button></div><a class="continue-link" id="mj-continue" href="/games/mj/" hidden>继续原来的房间 →</a></div>
           </article>
         </div>
       </section>
       <section class="room-section" id="rooms" aria-labelledby="rooms-title">
-        <div class="section-heading"><h2 id="rooms-title">Find a table <span id="table-count" class="count-label">0</span></h2><button class="text-button" id="refresh" type="button">↻ Refresh</button></div>
+        <div class="section-heading"><h2 id="rooms-title">找个房间 <span id="table-count" class="count-label">0</span></h2><button class="text-button" id="refresh" type="button">↻ 刷新</button></div>
         <div class="room-panel">
-          <div class="room-toolbar"><div class="filter-group" role="group" aria-label="Filter games"><button class="filter active" data-filter="all" aria-pressed="true" type="button">All games</button><button class="filter" data-filter="ddz" aria-pressed="false" type="button">Cards</button><button class="filter" data-filter="wzq" aria-pressed="false" type="button">Gomoku</button><button class="filter" data-filter="mj" aria-pressed="false" type="button">Mahjong</button></div><label class="open-filter"><input type="checkbox" id="open-only"> Open only</label></div>
-          <div class="network-error" id="network-error" role="status" hidden>Server offline. Reconnecting…</div>
-          <div class="table-scroll"><table><thead><tr><th>ROOM</th><th>GAME</th><th>HOST</th><th>SEATS</th><th>STATUS</th><th><span class="sr-only">Action</span></th></tr></thead><tbody id="room-list"></tbody></table></div>
-          <div class="empty-state" id="empty-state"><div class="empty-icon">＋</div><strong>No tables yet</strong><p>Create a room and invite your friends.</p><button class="text-button" id="empty-create" type="button">Create the first room →</button></div>
-          <form class="quick-join" id="quick-join"><span>Have a code?</span><label class="sr-only" for="join-game">Game</label><select id="join-game"><option value="ddz">Cards</option><option value="wzq">Gomoku</option><option value="mj">Mahjong</option></select><label class="sr-only" for="join-code">Room code</label><input id="join-code" placeholder="6-digit code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required><button class="button small" type="submit">Join room →</button></form>
+          <div class="room-toolbar"><div class="filter-group" role="group" aria-label="筛选游戏"><button class="filter active" data-filter="all" aria-pressed="true" type="button">全部游戏</button><button class="filter" data-filter="ddz" aria-pressed="false" type="button">斗地主</button><button class="filter" data-filter="wzq" aria-pressed="false" type="button">五子棋</button><button class="filter" data-filter="mj" aria-pressed="false" type="button">麻将</button></div><label class="open-filter"><input type="checkbox" id="open-only"> 仅看可加入</label></div>
+          <div class="network-error" id="network-error" role="status" hidden>主机离线，正在重连…</div>
+          <div class="table-scroll"><table><thead><tr><th>房间</th><th>游戏</th><th>房主</th><th>人数</th><th>状态</th><th><span class="sr-only">操作</span></th></tr></thead><tbody id="room-list"></tbody></table></div>
+          <div class="empty-state" id="empty-state"><div class="empty-icon">＋</div><strong>暂无房间</strong><p>创建房间，邀请好友一起玩。</p><button class="text-button" id="empty-create" type="button">创建第一个房间 →</button></div>
+          <form class="quick-join" id="quick-join"><span>已有房间号？</span><label class="sr-only" for="join-game">游戏</label><select id="join-game"><option value="ddz">斗地主</option><option value="wzq">五子棋</option><option value="mj">麻将</option></select><label class="sr-only" for="join-code">房间号</label><input id="join-code" placeholder="六位房间号" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required><button class="button small" type="submit">加入房间 →</button></form>
         </div>
       </section>
-      <footer><span><i class="live-dot"></i> Local games. Shared moments.</span><span>LAN / 01</span></footer>
+      <footer><span><i class="live-dot"></i> 局域网里的游戏时光。</span><span>游戏厅 / 01</span></footer>
     </main>
   </div>
-  <dialog id="create-dialog"><form id="create-form"><div class="eyebrow">A NEW ROUND</div><h2>Create a room</h2><p>Share this lobby with your friends.</p><label for="create-game">Game</label><select id="create-game"><option value="ddz">Cards · 3 players</option><option value="wzq">Gomoku · 2 players</option><option value="mj">Mahjong · 4 players</option></select><div class="dialog-actions"><button class="button" id="cancel-create" type="button">Cancel</button><button class="button primary" type="submit">Create room</button></div></form></dialog>
-  <dialog id="switch-dialog"><h2>Room already open</h2><p>Leave your current room to open another?</p><div class="dialog-actions"><button class="button" id="cancel-switch" type="button">Cancel</button><button class="button primary" id="confirm-switch" type="button">Leave &amp; continue</button></div></dialog>
+  <dialog id="create-dialog"><form id="create-form"><div class="eyebrow">新的一局</div><h2>创建房间</h2><p>邀请同一局域网的好友加入。</p><label for="create-game">游戏</label><select id="create-game"><option value="ddz">斗地主 · 3人</option><option value="wzq">五子棋 · 2人</option><option value="mj">麻将 · 4人</option></select><div class="dialog-actions"><button class="button" id="cancel-create" type="button">取消</button><button class="button primary" type="submit">创建房间</button></div></form></dialog>
+  <dialog id="switch-dialog"><h2>已有房间</h2><p>退出当前房间，再进入其他房间？</p><div class="dialog-actions"><button class="button" id="cancel-switch" type="button">取消</button><button class="button primary" id="confirm-switch" type="button">退出并继续</button></div></dialog>
   <div class="toast" id="toast" role="status" hidden></div>
 </body>
 </html>
