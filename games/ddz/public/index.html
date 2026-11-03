@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#1e1f22">
+  <meta name="description" content="A quiet table. Three players. One LAN.">
+  <title>LAN · Cards</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%232b2d30'/%3E%3Ctext x='32' y='47' text-anchor='middle' font-size='46' fill='%237da6ff'%3E♠%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/games/ddz/style.css">
+  <link rel="stylesheet" href="/platform.css">
+  <script src="/bridge.js" defer></script>
+  <script src="/games/ddz/app.js" defer></script>
+</head>
+<body data-platform-game="ddz">
+  <nav class="platform-bar" aria-label="Platform"><a class="platform-home" href="/">▦ <strong>LAN</strong> <span>/ Lobby</span></a><div class="platform-games"><a href="/games/ddz/" aria-current="page">Cards</a><a href="/games/wzq/" >Gomoku</a><a href="/games/mj/" >Mahjong</a></div></nav>
+  <header class="app-header">
+    <a class="brand" href="/" aria-label="Home"><span class="brand-mark">♠</span><strong>DARCUO</strong><span class="brand-divider"></span><span class="brand-en">CLUB</span></a>
+    <div class="header-right"><span class="connection"><i id="connection-dot"></i><span id="connection-label">LAN</span></span><button class="icon-button" id="rules-button" aria-label="Rules" title="Rules">?</button></div>
+  </header>
+
+  <main id="lobby" class="lobby">
+    <section class="intro">
+      <div class="eyebrow"><span class="tiny-line"></span>LESS NOISE. MORE PLAY.</div>
+      <h1>Three players.<br>One table.</h1>
+      <p class="intro-copy">A quiet game with friends.<br>Join the same LAN to start.</p>
+      <div class="features"><span><i class="feature-dot"></i>No sign-up</span><span><i class="feature-dot"></i>Live sync</span><span><i class="feature-dot"></i>3 players</span></div>
+
+      <div class="entry-panel">
+        <label class="field-label" for="nickname">Name <span>YOUR NAME</span></label>
+        <input id="nickname" maxlength="12" autocomplete="nickname" placeholder="Your name" aria-describedby="name-help">
+        <span id="name-help" class="sr-only">1–12 characters</span>
+        <div class="entry-tabs" role="tablist" aria-label="Room actions">
+          <button id="create-tab" class="entry-tab active" role="tab" aria-selected="true" aria-controls="create-panel">Create room</button>
+          <button id="join-tab" class="entry-tab" role="tab" aria-selected="false" aria-controls="join-panel">Join room</button>
+        </div>
+        <div id="create-panel" role="tabpanel" aria-labelledby="create-tab">
+          <p class="field-note">Invite two friends.</p>
+          <button id="create-button" class="button primary full">Create room <span aria-hidden="true">↗</span></button>
+        </div>
+        <div id="join-panel" role="tabpanel" aria-labelledby="join-tab" hidden>
+          <label class="sr-only" for="room-code">6-digit room code</label>
+          <input id="room-code" class="code-input" inputmode="numeric" maxlength="6" pattern="[0-9]{6}" placeholder="6-digit code" autocomplete="off">
+          <button id="join-button" class="button primary full">Join <span aria-hidden="true">↗</span></button>
+        </div>
+        <div class="practice-row"><span>Waiting?</span><button id="practice-button" class="text-button">Practice <span aria-hidden="true">→</span></button></div>
+      </div>
+    </section>
+
+    <section class="lobby-visual" aria-label="Table preview">
+      <div class="preview-topline"><span><i class="status-light"></i>THE TABLE</span><span>01 / 03</span></div>
+      <div class="preview-table">
+        <div class="preview-seat seat-north"><div class="avatar">N</div><span>Open seat</span><span class="seat-line"></span></div>
+        <div class="preview-seat seat-east"><div class="avatar">S</div><span>Open seat</span><span class="seat-line"></span></div>
+        <div class="preview-center"><div class="preview-suits"><span>♠</span><span>♥</span><span>♣</span><span>♦</span></div><span>Take your time.</span><small>YOUR NEXT HAND AWAITS</small></div>
+        <div class="preview-hand" aria-hidden="true">
+          <div class="preview-card"><b>A</b><span>♠</span></div>
+          <div class="preview-card"><b>K</b><span>♣</span></div>
+          <div class="preview-card red"><b>Q</b><span>♥</span></div>
+          <div class="preview-card"><b>J</b><span>♠</span></div>
+          <div class="preview-card red"><b>10</b><span>♦</span></div>
+        </div>
+      </div>
+      <div class="preview-bottomline"><span>♠ &nbsp; DARCUO CLUB</span><span>ONE HAND AT A TIME</span></div>
+      <div class="network-note"><span class="network-icon">⌁</span><div><strong>Same LAN. Same table.</strong><p>One host. Any browser.</p></div></div>
+    </section>
+  </main>
+
+  <main id="game" class="game" hidden>
+    <div class="room-toolbar">
+      <div class="room-title"><span class="eyebrow">ROOM</span><strong id="room-number"></strong><span id="practice-badge" class="muted-badge" hidden>Practice</span><button id="copy-room" class="text-button small">Invite</button></div>
+      <div class="room-tools"><span id="round-label">Waiting</span><button id="sound-toggle" class="icon-button preference-button" type="button" aria-label="Sound on" aria-pressed="true" title="Sound: on. Click to toggle.">♫</button><button id="notification-toggle" class="icon-button preference-button" type="button" aria-label="Alerts off" aria-pressed="false" title="Alerts: off. Click to toggle.">!</button><button id="leave-button" class="text-button danger-text">Leave</button></div>
+    </div>
+
+    <section class="board" aria-label="Table">
+      <div class="board-top"><div class="bottom-area"><span class="label-mono">Reserve</span><div id="bottom-cards" class="mini-cards"></div></div><div class="score-pill">Multiplier <strong id="multiplier">×1</strong></div></div>
+      <div id="opponent-left" class="opponent opponent-left"></div>
+      <div id="opponent-right" class="opponent opponent-right"></div>
+      <div class="board-watermark" aria-hidden="true">♠<span>DARCUO</span></div>
+      <div id="left-play" class="played-zone left-play"></div>
+      <div id="right-play" class="played-zone right-play"></div>
+      <div id="self-play" class="played-zone self-play"></div>
+      <div id="center-status" class="center-status" aria-live="polite"></div>
+      <div class="board-bottom"><span id="turn-status"></span><span id="countdown" class="countdown"></span></div>
+    </section>
+
+    <section class="hand-section" aria-label="Your cards">
+      <div class="hand-toolbar"><div id="self-info" class="self-info"></div><span id="selection-label" class="selection-label">Waiting</span></div>
+      <div id="action-bar" class="action-bar"></div>
+      <div id="hand" class="hand"></div>
+      <div class="hand-footer"><span id="hand-help">Select cards, then Play.</span><div class="hand-feedback"><button id="sound-test" class="text-button" type="button">Test sound</button><span id="sound-status" role="status">Click Test sound.</span></div><span>ENTER Play <span class="footer-divider">/</span> ESC Clear</span></div>
+    </section>
+    <details id="card-counter" class="card-counter" hidden open>
+      <summary>Counter <span id="counter-total"></span></summary>
+      <div id="counter-grid" class="counter-grid" role="list" aria-label="Other players remaining"></div>
+      <p id="counter-note">Other players combined.</p>
+    </details>
+    <details class="activity"><summary>Activity <span>GAME LOG</span></summary><ol id="game-log"></ol></details>
+  </main>
+
+  <footer class="app-footer"><span>A quiet table with friends.</span><span>DARK THEME <i></i> LAN ONLY</span></footer>
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+  <dialog id="rules-dialog" class="modal">
+    <div class="modal-heading"><h2>Rules</h2><button id="close-rules" class="icon-button" aria-label="Close">×</button></div>
+    <p>3 players · 54 cards</p>
+    <dl class="rules-list">
+      <dt>Start</dt><dd>All ready, host starts. 17 cards each; solo takes 3 more.</dd>
+      <dt>Bid</dt><dd>Bid 1–3 or pass. Highest wins solo. All pass: redeal.</dd>
+      <dt>Types</dt><dd>Singles, pairs, triples, runs, planes and attachments. No 2 or jokers in runs.</dd>
+      <dt>Follow</dt><dd>Match type and length; play higher. Bombs beat normal plays. Rocket beats all. Two passes reset the lead.</dd>
+      <dt>Wings</dt><dd>Four + 2 may use a pair. Plane wings may use pairs as singles; no triples or quads.</dd>
+      <dt>Points</dt><dd>Bid sets base points. Bombs, rocket and sweeps double it. Solo scores ×2; teammates ×1.</dd>
+      <dt>Timeout</dt><dd>Bid: 20s. Play: 45s. Timeout: pass, or lowest single to lead. Rejoin within 2 min.</dd>
+    </dl>
+    <div class="modal-note">Share the LAN URL and code. Restarting the host clears all rooms.</div>
+  </dialog>
+
+  <dialog id="leave-dialog" class="modal compact-modal">
+    <div class="modal-heading"><h2>Leave?</h2></div>
+    <p>This round will be cancelled.</p>
+    <div class="modal-actions"><button id="cancel-leave" class="button secondary">Stay</button><button id="confirm-leave" class="button primary">Leave</button></div>
+  </dialog>
+</body>
+</html>

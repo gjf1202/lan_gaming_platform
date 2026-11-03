@@ -1,0 +1,5 @@
+.platform-bar { display: flex; justify-content: space-between; align-items: center; gap: 16px; min-height: 45px; padding: 9px max(20px, 4vw); background: #25262a; border-bottom: 1px solid #3a3d43; color: #adb4ba; font: 11px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+.platform-bar a { color: inherit; text-decoration: none; }.platform-bar a:hover { color: #d2e4d7; }.platform-bar a:focus-visible { outline: 2px solid #9dbdab; outline-offset: 4px; }
+.platform-home { display: flex; align-items: center; gap: 9px; }.platform-home strong { color: #c2d4c8; font-weight: 600; letter-spacing: 1px; }.platform-home span { color: #858b94; }
+.platform-games { display: flex; gap: 23px; }.platform-games a[aria-current="page"] { color: #b7d4c1; }
+@media (max-width: 480px) { .platform-bar { padding-inline: 14px; gap: 10px; font-size: 10px; }.platform-games { gap: 15px; }.platform-home span { display: none; } }
