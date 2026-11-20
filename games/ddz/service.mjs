@@ -88,8 +88,38 @@ export function createGameService() {
     if (!session) { fail('会话已过期，请重新加入。', 401); }
     return session;
   }
+
+  function collectNoShuffleDeck(room) {
+    const cards = [...room.playedCards];
+    for (const player of room.players) {
+      cards.push(...player.hand);
+    }
+    cards.push(...room.bottom);
+    const seen = new Set();
+    const collected = cards.filter(card => {
+      if (seen.has(card.id)) { return false; }
+      seen.add(card.id);
+      return true;
+    });
+    if (collected.length < 54) {
+      for (const card of makeDeck()) {
+        if (!seen.has(card.id)) {
+          collected.push(card);
+          seen.add(card.id);
+        }
+      }
+    }
+    return collected;
+  }
+
+  function nextDeck(room) {
+    if (!room.noShuffle) { return shuffledDeck(); }
+    if (room.round === 0) { return shuffledDeck(); }
+    return collectNoShuffleDeck(room);
+  }
+
   function startRound(room) {
-    const deck = room.noShuffle ? makeDeck() : shuffledDeck();
+    const deck = nextDeck(room);
     room.phase = 'grabbing';
     room.round++;
     room.landlord = null;
