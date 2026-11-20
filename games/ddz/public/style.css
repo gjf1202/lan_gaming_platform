@@ -54,6 +54,9 @@ input:focus { border-color: var(--blue); box-shadow: 0 0 0 2px #82a9f414; }
 .entry-tab { background: none; border: 0; border-bottom: 2px solid transparent; padding: 10px 0 12px; color: var(--muted); font-size: 12px; }
 .entry-tab.active { color: var(--text); border-bottom-color: var(--blue); }
 .field-note { color: var(--muted); font-size: 12px; margin: 17px 0; }
+.mode-option { display: flex; align-items: center; gap: 8px; margin: 0 0 16px; color: #c9ccd3; font-size: 12px; cursor: pointer; }
+.mode-option input { width: 15px; height: 15px; margin: 0; accent-color: var(--blue); }
+.mode-option small { margin-left: auto; color: var(--muted); font-size: 10px; }
 .button { border: 1px solid transparent; border-radius: 5px; min-height: 40px; padding: 9px 20px; font-size: 13px; font-weight: 500; }
 .primary { background: #7299e5; border-color: #83a8ee; color: #111b2c; }
 .primary:hover:not(:disabled) { background: #8aaff7; }
@@ -106,6 +109,7 @@ input:focus { border-color: var(--blue); box-shadow: 0 0 0 2px #82a9f414; }
 .room-title strong { font: 22px/1 Consolas, monospace; letter-spacing: 3px; font-weight: 400; }
 .room-tools > span { color: var(--muted); font-size: 11px; }
 .muted-badge { font-size: 10px; background: #303541; border: 1px solid #46516a; color: #a2b3d4; border-radius: 4px; padding: 1px 6px; }
+.mode-badge { border-color: #53604f; background: #2d352d; color: #a9c4a4; }
 .danger-text { color: #b09ba2; }
 .danger-text:hover { color: var(--red); }
 .board { position: relative; min-height: 370px; background: #24262a; border: 1px solid #41444b; border-radius: 14px; overflow: hidden; }

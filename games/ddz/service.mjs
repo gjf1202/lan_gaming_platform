@@ -1,5 +1,5 @@
 import { randomBytes, randomInt } from 'node:crypto';
-import { PLAYER_COUNT, HAND_SIZE, shuffledDeck, sortCards, legalMoves, resolvePlay } from './game.mjs';
+import { PLAYER_COUNT, HAND_SIZE, makeDeck, shuffledDeck, sortCards, legalMoves, resolvePlay } from './game.mjs';
 
 import { readBody, sendJson, rateLimit, openEvents, openRoomWatcher, pushRoomWatchers, closeRoomWatchers, describeRooms, fail, validName, pushRoom, addRoomChatMessage } from '../../lib/transport.mjs';
 const json = sendJson;
@@ -27,7 +27,7 @@ export function createGameService() {
     const reveal = room.phase === 'finished';
     const target = room.lastPlay && room.lastPlay.seat !== room.turn ? room.lastPlay.pattern : null;
     return {
-      code: room.code, practice: room.practice, phase: room.phase, you: player.seat,
+      code: room.code, practice: room.practice, noShuffle: room.noShuffle, phase: room.phase, you: player.seat,
       host: room.host, turn: room.turn, deadline: room.deadline, serverTime: Date.now(),
       landlord: room.landlord, baseScore: BASE_SCORE, multiplier: room.multiplier, round: room.round,
       grabCount: room.grabCount, grabResponses: room.grabResponses,
@@ -64,12 +64,12 @@ export function createGameService() {
   function bindSession(room, player) {
     sessions.set(player.token, { room, player, stream: null, requests: [] });
   }
-  function makeRoom(name, practice) {
+  function makeRoom(name, practice, noShuffle) {
     if (rooms.size >= MAX_ROOMS) { fail('房间数量已满，请稍后再试。', 503); }
     let code;
     do { code = String(randomInt(100000, 1000000)); } while (rooms.has(code));
     const room = {
-      code, practice, host: 0, players: [newPlayer(name, 0), null, null],
+      code, practice, noShuffle, host: 0, players: [newPlayer(name, 0), null, null],
       phase: 'waiting', turn: null, landlord: null, bottom: [], lastPlay: null, playedCards: [],
       table: [null, null, null], grabCount: 0, grabbedSeats: [], grabResponses: Array(PLAYER_COUNT).fill(false), multiplier: 1,
       passes: 0, round: 0, log: [], chat: [], winner: null, result: null, updatedAt: Date.now(), deadline: 0
@@ -89,7 +89,7 @@ export function createGameService() {
     return session;
   }
   function startRound(room) {
-    const deck = shuffledDeck();
+    const deck = room.noShuffle ? makeDeck() : shuffledDeck();
     room.phase = 'grabbing';
     room.round++;
     room.landlord = null;
@@ -232,7 +232,7 @@ export function createGameService() {
   async function api(request, response, path) {
     const body = await readBody(request);
     if (path === '/api/create') {
-      const room = makeRoom(validName(body.name, 12), body.practice === true);
+      const room = makeRoom(validName(body.name, 12), body.practice === true, body.noShuffle === true);
       json(response, { token: room.players[0].token, state: view(room, room.players[0]) });
       return;
     }

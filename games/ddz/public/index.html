@@ -38,6 +38,7 @@
         </div>
         <div id="create-panel" role="tabpanel" aria-labelledby="create-tab">
           <p class="field-note">邀请两位好友加入。</p>
+          <label class="mode-option" for="no-shuffle"><input id="no-shuffle" type="checkbox"><span>不洗牌模式</span><small>固定牌堆顺序</small></label>
           <button id="create-button" class="button primary full">创建房间 <span aria-hidden="true">↗</span></button>
         </div>
         <div id="join-panel" role="tabpanel" aria-labelledby="join-tab" hidden>
@@ -70,7 +71,7 @@
 
   <main id="game" class="game" hidden>
     <div class="room-toolbar">
-      <div class="room-title"><span class="eyebrow">房间</span><strong id="room-number"></strong><span id="practice-badge" class="muted-badge" hidden>单人练习</span><span id="room-presence" class="room-presence" role="status" hidden></span><button id="copy-room" class="text-button small">邀请好友</button></div>
+      <div class="room-title"><span class="eyebrow">房间</span><strong id="room-number"></strong><span id="practice-badge" class="muted-badge" hidden>单人练习</span><span id="no-shuffle-badge" class="muted-badge mode-badge" hidden>不洗牌</span><span id="room-presence" class="room-presence" role="status" hidden></span><button id="copy-room" class="text-button small">邀请好友</button></div>
       <div class="room-tools"><span id="round-label">等待中</span><button id="sound-toggle" class="icon-button preference-button" type="button" aria-label="音效已开" aria-pressed="true" title="音效已开启，点击切换。">♫</button><button id="notification-toggle" class="icon-button preference-button" type="button" aria-label="提醒已关" aria-pressed="false" title="提醒已关闭，点击切换。">!</button><button id="leave-button" class="text-button danger-text">退出</button></div>
     </div>
 

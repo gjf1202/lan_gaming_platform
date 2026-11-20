@@ -189,7 +189,7 @@ async function withBusy(task) {
   }
 }
 function toggleEntryButtons(disabled) {
-  for (const id of ['create-button', 'join-button', 'practice-button']) { byId(id).disabled = disabled; }
+  for (const id of ['create-button', 'join-button', 'practice-button', 'no-shuffle']) { byId(id).disabled = disabled; }
 }
 function readName() {
   const name = byId('nickname').value.trim();
@@ -255,6 +255,7 @@ function applyState(next) {
   byId('game').hidden = false;
   byId('room-number').textContent = state.code;
   byId('practice-badge').hidden = !state.practice;
+  byId('no-shuffle-badge').hidden = !state.noShuffle;
   byId('copy-room').hidden = state.practice;
   const onlinePlayers = state.players.filter(entry => entry?.online).length;
   const emptySeats = state.players.filter(entry => !entry).length;
@@ -571,8 +572,8 @@ document.addEventListener('visibilitychange', () => {
 });
 byId('create-tab').addEventListener('click', () => setEntryTab(false));
 byId('join-tab').addEventListener('click', () => setEntryTab(true));
-byId('create-button').addEventListener('click', () => { void withBusy(async () => enterRoom(await api('create', { name: readName() }))); });
-byId('practice-button').addEventListener('click', () => { void withBusy(async () => enterRoom(await api('create', { name: readName(), practice: true }))); });
+byId('create-button').addEventListener('click', () => { void withBusy(async () => enterRoom(await api('create', { name: readName(), noShuffle: byId('no-shuffle').checked }))); });
+byId('practice-button').addEventListener('click', () => { void withBusy(async () => enterRoom(await api('create', { name: readName(), practice: true, noShuffle: byId('no-shuffle').checked }))); });
 byId('join-button').addEventListener('click', () => {
   void withBusy(async () => {
     const name = readName();
