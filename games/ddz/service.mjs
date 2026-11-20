@@ -1,5 +1,5 @@
 import { randomBytes, randomInt } from 'node:crypto';
-import { PLAYER_COUNT, HAND_SIZE, makeDeck, shuffledDeck, sortCards, legalMoves, resolvePlay } from './game.mjs';
+import { PLAYER_COUNT, HAND_SIZE, lightlyShuffledDeck, shuffledDeck, sortCards, legalMoves, resolvePlay } from './game.mjs';
 
 import { readBody, sendJson, rateLimit, openEvents, openRoomWatcher, pushRoomWatchers, closeRoomWatchers, describeRooms, fail, validName, pushRoom, addRoomChatMessage } from '../../lib/transport.mjs';
 const json = sendJson;
@@ -89,33 +89,9 @@ export function createGameService() {
     return session;
   }
 
-  function collectNoShuffleDeck(room) {
-    const cards = [...room.playedCards];
-    for (const player of room.players) {
-      cards.push(...player.hand);
-    }
-    cards.push(...room.bottom);
-    const seen = new Set();
-    const collected = cards.filter(card => {
-      if (seen.has(card.id)) { return false; }
-      seen.add(card.id);
-      return true;
-    });
-    if (collected.length < 54) {
-      for (const card of makeDeck()) {
-        if (!seen.has(card.id)) {
-          collected.push(card);
-          seen.add(card.id);
-        }
-      }
-    }
-    return collected;
-  }
-
   function nextDeck(room) {
     if (!room.noShuffle) { return shuffledDeck(); }
-    if (room.round === 0) { return shuffledDeck(); }
-    return collectNoShuffleDeck(room);
+    return lightlyShuffledDeck();
   }
 
   function startRound(room) {

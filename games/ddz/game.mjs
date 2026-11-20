@@ -32,6 +32,19 @@ export function shuffledDeck() {
   return cards;
 }
 
+export function lightlyShuffledDeck() {
+  const cards = makeDeck();
+  const swapCount = 12;
+  const maxDistance = 6;
+  for (let count = 0; count < swapCount; count++) {
+    const firstIndex = randomInt(cards.length);
+    const distance = randomInt(maxDistance * 2 + 1) - maxDistance;
+    const secondIndex = Math.max(0, Math.min(cards.length - 1, firstIndex + distance));
+    [cards[firstIndex], cards[secondIndex]] = [cards[secondIndex], cards[firstIndex]];
+  }
+  return cards;
+}
+
 function groupCards(cards) {
   const groups = new Map();
   for (const card of cards) {
