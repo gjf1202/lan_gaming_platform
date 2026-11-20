@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#1e1f22">
+  <title>备忘录</title>
+  <link rel="stylesheet" href="/watch.css">
+  <script src="/watch.js" defer></script>
+</head>
+<body>
+  <header><a href="/">▦ 游戏厅 <span>/ 房间列表</span></a><span id="connection"><i></i>连接中</span></header>
+  <main>
+    <div class="heading"><div><p id="game-name">观战</p><h1>房间 <span id="room-number">------</span></h1></div><span id="phase">等待房间状态</span></div>
+    <section class="watch-panel">
+      <div id="public-board" hidden><canvas id="gomoku-board" width="600" height="600" aria-label="五子棋观战棋盘"></canvas></div>
+      <div id="ddz-board" hidden><h2>桌面</h2><div id="ddz-table"></div></div>
+      <div id="mj-board" hidden><h2>弃牌区</h2><div id="mj-table"></div></div>
+      <div class="lower-grid"><section><h2>座位</h2><div id="players"></div></section><section><h2>牌局记录</h2><ol id="log"></ol></section></div>
+    </section>
+    <p id="error" role="status"></p>
+  </main>
+  <script src="/presence.js" defer></script>
+</body>
+</html>

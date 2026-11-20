@@ -103,6 +103,10 @@ function applyState(next) {
   byId('lobby').hidden = true;
   byId('game').hidden = false;
   byId('room-number').textContent = state.code;
+  const onlinePlayers = state.players.filter(entry => entry?.online).length;
+  const emptySeats = state.players.filter(entry => !entry).length;
+  byId('room-presence').textContent = `在线 ${onlinePlayers} · 空位 ${emptySeats}`;
+  window.updateRoomChat?.(state);
   renderPlayers();
   renderBoard();
   renderActions();
@@ -307,7 +311,8 @@ async function copyInvite() {
   const base = local ? info.addresses[0] || location.origin : location.origin;
   const invite = `${base}/games/wzq/?room=${state.code}`;
   try {
-    await navigator.clipboard.writeText(`${invite}\n房间号：${state.code}`);
+    const emptySeats = state.players.filter(entry => !entry).length;
+    await navigator.clipboard.writeText(`五子棋邀请：${invite}\n房间号：${state.code}\n当前空位：${emptySeats}\n请连接同一局域网加入。`);
     toast('邀请链接已复制。');
   } catch {
     toast(`${base} · ${state.code}`);

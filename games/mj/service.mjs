@@ -4,9 +4,12 @@ import {
   nextSeat, removeTiles, sortHand, validateTile
 } from './game.mjs';
 
-import { readBody, sendJson, rateLimit, openEvents, describeRooms, fail, validName, pushRoom } from '../../lib/transport.mjs';
+import { readBody, sendJson, rateLimit, openEvents, openRoomWatcher, pushRoomWatchers, closeRoomWatchers, describeRooms, fail, validName, pushRoom, addRoomChatMessage } from '../../lib/transport.mjs';
 
 export function createGameService() {
+  const TURN_MS = 45000;
+  const CLAIM_MS = 20000;
+  const BASE_SCORE = 1;
   const SEAT_RESERVE_MS = 2 * 60 * 1000;
   const ROOM_TTL_MS = 30 * 60 * 1000;
   const MAX_ROOMS = 200;
@@ -19,11 +22,15 @@ export function createGameService() {
 
 
   function createPlayer(name, seat) {
-    return { token: createToken(), name, seat, online: true, offlineAt: 0, ready: false, hand: [], melds: [], discards: [] };
+    return { token: createToken(), name, seat, online: true, offlineAt: 0, ready: false, hand: [], melds: [], discards: [], score: 0 };
   }
 
   function addLog(room, message) {
     room.log = [...room.log.slice(-39), { id: createToken().slice(0, 8), message }];
+  }
+
+  function setDeadline(room, duration) {
+    room.deadline = Date.now() + duration;
   }
 
   function bindSession(room, player) {
@@ -39,10 +46,10 @@ export function createGameService() {
       code = String(randomInt(100000, 1000000));
     } while (rooms.has(code));
     const room = {
-      code, host: 0, players: Array(PLAYER_COUNT).fill(null), phase: 'waiting',
+      code, host: 0, players: Array(PLAYER_COUNT).fill(null), phase: 'waiting', chat: [],
       dealer: 0, turn: 0, wall: [], lastDiscard: null,
       claimResponses: Array(PLAYER_COUNT).fill(false), claimChoices: [], winner: null,
-      log: [], updatedAt: Date.now()
+      log: [], result: null, deadline: 0, updatedAt: Date.now()
     };
     const player = createPlayer(name, 0);
     room.players[0] = player;
@@ -65,12 +72,15 @@ export function createGameService() {
     return {
       code: room.code,
       you: player.seat,
+      baseScore: BASE_SCORE,
       host: room.host,
       players: room.players.map((entry) => entry ? {
         seat: entry.seat, name: entry.name, online: entry.online, ready: entry.ready,
-        handCount: entry.hand.length, discards: entry.discards, melds: entry.melds
+        handCount: entry.hand.length, discards: entry.discards, melds: entry.melds, score: entry.score
       } : null),
       phase: room.phase,
+      deadline: room.deadline,
+      serverTime: Date.now(),
       dealer: room.dealer,
       turn: room.turn,
       hand: sortHand(player.hand),
@@ -80,20 +90,31 @@ export function createGameService() {
       claimOptions: getClaimOptions(room, player.seat),
       selfOptions: getSelfOptions(room, player.seat),
       winner: room.winner,
-      log: room.log
+      result: room.result,
+      log: room.log,
+      chat: room.chat
     };
   }
 
-  function push(room) { pushRoom(room, sessions, roomView); }
+  function spectatorView(room) {
+    return { ...roomView(room, { seat: 0, hand: [], melds: [] }), you: null, hand: [], claimOptions: [], selfOptions: [], chat: undefined, spectator: true };
+  }
+
+  function push(room) {
+    pushRoom(room, sessions, roomView);
+    pushRoomWatchers(room, spectatorView);
+  }
 
   function startGame(room) {
     room.wall = createWall();
     room.phase = 'playing';
     room.turn = room.dealer;
+    setDeadline(room, TURN_MS);
     room.lastDiscard = null;
     room.claimResponses = Array(PLAYER_COUNT).fill(false);
     room.claimChoices = [];
     room.winner = null;
+    room.result = null;
     for (const player of room.players) {
       player.hand = [];
       player.melds = [];
@@ -113,12 +134,14 @@ export function createGameService() {
     if (room.wall.length === 0) {
       room.phase = 'finished';
       room.winner = null;
+      room.deadline = 0;
       addLog(room, '牌墙已空，本局流局。');
       return false;
     }
     room.players[seat].hand.push(room.wall.pop());
     room.turn = seat;
     room.phase = 'playing';
+    setDeadline(room, TURN_MS);
     return true;
   }
 
@@ -133,6 +156,7 @@ export function createGameService() {
     player.discards.push({ tile, claimed: false });
     room.lastDiscard = { tile, seat: player.seat };
     room.phase = 'claim';
+    setDeadline(room, CLAIM_MS);
     room.claimResponses = Array(PLAYER_COUNT).fill(false);
     room.claimResponses[player.seat] = true;
     room.claimChoices = [];
@@ -143,6 +167,26 @@ export function createGameService() {
     }
     addLog(room, `${player.name} 打出一张牌。`);
     settleClaims(room);
+  }
+
+  function finishWithWinner(room, seat, discarder = null) {
+    room.phase = 'finished';
+    room.winner = seat;
+    room.deadline = 0;
+    const changes = Array(PLAYER_COUNT).fill(0);
+    if (discarder === null) {
+      for (let other = 0; other < PLAYER_COUNT; other++) {
+        if (other !== seat) {
+          changes[other] -= BASE_SCORE;
+          changes[seat] += BASE_SCORE;
+        }
+      }
+    } else if (discarder !== seat) {
+      changes[discarder] -= BASE_SCORE;
+      changes[seat] += BASE_SCORE;
+    }
+    room.players.forEach((player, index) => { player.score += changes[index]; });
+    room.result = { type: discarder === null ? 'self-draw' : 'discard', discarder, changes };
   }
 
   function chooseClaim(room, player, type, tiles = []) {
@@ -194,9 +238,9 @@ export function createGameService() {
     const discardedTile = room.lastDiscard.tile;
     const discarder = room.players[room.lastDiscard.seat];
     if (claim.type === 'hu') {
-      room.phase = 'finished';
-      room.winner = claim.seat;
+      finishWithWinner(room, claim.seat, room.lastDiscard.seat);
       addLog(room, `${claimer.name} 胡牌。`);
+      addLog(room, `${claimer.name} +${BASE_SCORE} 分，${discarder.name} -${BASE_SCORE} 分。`);
       return;
     }
     const removed = removeTiles(claimer.hand, claim.type === 'chi' ? claim.tiles : Array(claim.type === 'kong' ? 3 : 2).fill(discardedTile));
@@ -211,7 +255,9 @@ export function createGameService() {
     discarder.discards.at(-1).claimed = true;
     room.phase = 'playing';
     room.turn = claim.seat;
+    setDeadline(room, TURN_MS);
     room.lastDiscard = null;
+    room.result = null;
     room.claimResponses = Array(PLAYER_COUNT).fill(false);
     room.claimChoices = [];
     addLog(room, `${claimer.name} ${ { chi: '吃', pung: '碰', kong: '杠' }[claim.type] || '响应'}。`);
@@ -250,12 +296,14 @@ export function createGameService() {
     const remaining = room.players.filter(Boolean);
     if (remaining.length === 0) {
       rooms.delete(room.code);
+      closeRoomWatchers(room);
       return;
     }
     if (room.host === player.seat) {
       room.host = remaining[0].seat;
     }
     room.phase = 'waiting';
+    room.deadline = 0;
     room.wall = [];
     room.lastDiscard = null;
     room.claimChoices = [];
@@ -306,6 +354,12 @@ export function createGameService() {
     const session = requireSession(token);
     const { room, player } = session;
     rateLimit(session);
+    if (path === '/api/chat') {
+      addRoomChatMessage(room, player, body.text);
+      push(room);
+      sendJson(response, { state: roomView(room, player) });
+      return;
+    }
     if (path === '/api/resume') {
       sendJson(response, { state: roomView(room, player) });
       return;
@@ -348,8 +402,9 @@ export function createGameService() {
         fail('当前不能胡牌。');
       }
       room.phase = 'finished';
-      room.winner = player.seat;
+      finishWithWinner(room, player.seat);
       addLog(room, `${player.name} 自摸胡牌。`);
+      addLog(room, `${player.name} +${BASE_SCORE * (PLAYER_COUNT - 1)} 分。`);
       push(room);
     } else {
       fail('未知操作。', 404);
@@ -366,9 +421,36 @@ export function createGameService() {
           removePlayer(room, player);
         }
       }
+      if (!rooms.has(room.code)) {
+        continue;
+      }
       if (rooms.has(room.code) && now - room.updatedAt > ROOM_TTL_MS && !room.players.some((player) => player?.online)) {
         rooms.delete(room.code);
+        closeRoomWatchers(room);
+        continue;
       }
+      if (!room.deadline || now < room.deadline) {
+        continue;
+      }
+      if (room.phase === 'claim') {
+        room.claimResponses.forEach((responded, seat) => {
+          if (!responded) {
+            room.claimResponses[seat] = true;
+            addLog(room, `${room.players[seat].name} 超时，自动过。`);
+          }
+        });
+        settleClaims(room);
+      } else if (room.phase === 'playing') {
+        const player = room.players[room.turn];
+        const tile = player?.hand.at(-1);
+        if (tile) {
+          addLog(room, `${player.name} 超时，自动打出一张牌。`);
+          discard(room, player, tile);
+        } else {
+          room.deadline = 0;
+        }
+      }
+      push(room);
     }
   }, 1000);
 
@@ -376,7 +458,13 @@ export function createGameService() {
   return {
     handleApi: handleApi,
     listRooms: () => describeRooms(rooms, 'mj', 4),
-    openEvents(request, response, token) {
+    openEvents(request, response, token, watchCode) {
+      if (watchCode) {
+        const room = rooms.get(String(watchCode));
+        if (!room) { fail('房间不存在。', 404); }
+        openRoomWatcher(request, response, room, spectatorView);
+        return;
+      }
       const session = requireSession(token);
       openEvents(request, response, session, () => {
         if (rooms.has(session.room.code)) { push(session.room); }
@@ -384,6 +472,7 @@ export function createGameService() {
     },
     close() {
       clearInterval(maintenance);
+      for (const room of rooms.values()) { closeRoomWatchers(room); }
       for (const session of sessions.values()) { session.stream?.end(); }
     }
   };

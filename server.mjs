@@ -6,7 +6,7 @@ import { resolve } from 'node:path';
 import { createGameService as createCards } from './games/ddz/service.mjs';
 import { createGameService as createGomoku } from './games/wzq/service.mjs';
 import { createGameService as createMahjong } from './games/mj/service.mjs';
-import { fail, sendJson, rateLimit } from './lib/transport.mjs';
+import { fail, sendJson, rateLimit, readBody } from './lib/transport.mjs';
 
 export const GAME_CATALOG = [
   { id: 'ddz', name: '斗地主', capacity: 3, description: '一位地主，两位农民。', path: '/games/ddz/' },
@@ -19,11 +19,13 @@ export const GAME_CATALOG = [
 ];
 
 const MIME_TYPES = { html: 'text/html', js: 'text/javascript', css: 'text/css' };
-const ROOT_ASSETS = new Set(['index.html', 'app.js', 'style.css', 'bridge.js', 'platform.css']);
+const ROOT_ASSETS = new Set(['index.html', 'app.js', 'style.css', 'bridge.js', 'platform.css', 'presence.js', 'room-chat.js', 'watch.html', 'watch.js', 'watch.css']);
 const GAME_ASSETS = new Set(['index.html', 'app.js', 'style.css']);
 const ARCADE_ASSETS = new Set(['app.js', 'core.js', 'snake.js', 'tetris.js', 'tank.js', 'sokoban.js', 'style.css']);
 const FRONT_DOOR_LIMIT = 80;
 const FRONT_DOOR_WINDOW_MS = 10000;
+const PRESENCE_TTL_MS = 45000;
+const PRESENCE_LIMIT = 5000;
 
 function lanAddresses(port) {
   return [...new Set(Object.values(networkInterfaces()).flat()
@@ -44,6 +46,7 @@ function validateOrigin(request) {
 export function createPlatform() {
   const services = new Map([['ddz', createCards()], ['wzq', createGomoku()], ['mj', createMahjong()]]);
   const entryRequests = new Map();
+  const presence = new Map();
   const cleanup = setInterval(() => {
     for (const [address, bucket] of entryRequests) {
       if (bucket.requests.at(-1) < Date.now() - FRONT_DOOR_WINDOW_MS) { entryRequests.delete(address); }
@@ -56,8 +59,30 @@ export function createPlatform() {
     try {
       const url = new URL(request.url, 'http://localhost');
       const port = server.address().port;
+      if (request.method === 'POST' && url.pathname === '/api/presence') {
+        validateOrigin(request);
+        const address = request.socket.remoteAddress;
+        const bucket = entryRequests.get(address) || { requests: [] };
+        rateLimit(bucket, 120);
+        entryRequests.set(address, bucket);
+        const body = await readBody(request);
+        if (typeof body.clientId !== 'string' || !/^[\da-f]{32}$/.test(body.clientId)) { fail('在线状态无效。'); }
+        const now = Date.now();
+        for (const [key, lastSeen] of presence) {
+          if (lastSeen <= now - PRESENCE_TTL_MS) { presence.delete(key); }
+        }
+        const identity = `${address}:${body.clientId}`;
+        if (!presence.has(identity) && presence.size >= PRESENCE_LIMIT) { fail('在线人数已达上限，请稍后再试。', 503); }
+        presence.set(identity, now);
+        sendJson(response, { online: presence.size });
+        return;
+      }
       if (request.method === 'GET' && ['/api/lobby', '/api/info'].includes(url.pathname)) {
-        const info = { addresses: lanAddresses(port), port };
+        const now = Date.now();
+        for (const [key, lastSeen] of presence) {
+          if (lastSeen <= now - PRESENCE_TTL_MS) { presence.delete(key); }
+        }
+        const info = { addresses: lanAddresses(port), port, online: presence.size };
         if (url.pathname === '/api/lobby') {
           info.games = GAME_CATALOG;
           info.rooms = [...services.values()].flatMap((service) => service.listRooms())
@@ -97,7 +122,7 @@ export function createPlatform() {
           return;
         }
         if (request.method === 'GET' && gamePath === '/events') {
-          service.openEvents(request, response, url.searchParams.get('token'));
+          service.openEvents(request, response, url.searchParams.get('token'), url.searchParams.get('watch'));
           return;
         }
         if (request.method !== 'GET') { fail('不支持此请求方式。', 405); }

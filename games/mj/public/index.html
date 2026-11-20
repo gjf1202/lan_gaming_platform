@@ -5,15 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#1e1f22">
   <meta name="description" content="同一局域网的四人麻将牌桌。">
-  <title>游戏厅 · 麻将</title>
+  <title>备忘录</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%232b2d30'/%3E%3Crect x='14' y='10' width='36' height='44' rx='5' fill='%23e5e1d7'/%3E%3Cpath d='M23 42V23l9 12 9-12v19' fill='none' stroke='%231f5b4b' stroke-width='4'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="/games/mj/style.css">
   <link rel="stylesheet" href="/platform.css">
+  <script src="/presence.js" defer></script>
+  <script src="/room-chat.js" defer></script>
   <script src="/bridge.js" defer></script>
   <script src="/games/mj/app.js" defer></script>
 </head>
 <body data-platform-game="mj">
-  <nav class="platform-bar" aria-label="游戏平台"><a class="platform-home" href="/">▦ <strong>游戏厅</strong> <span>/ 大厅</span></a><div class="platform-games"><a href="/games/ddz/" >斗地主</a><a href="/games/wzq/" >五子棋</a><a href="/games/mj/" aria-current="page">麻将</a></div></nav>
+  <nav class="platform-bar" aria-label="游戏平台"><a class="platform-home" href="/">▦ <strong>游戏厅</strong> <span>/ 大厅</span></a><div class="platform-games"><a href="/games/ddz/" >斗地主</a><a href="/games/wzq/" >五子棋</a><a href="/games/mj/" aria-current="page">麻将</a></div><span class="global-online"><i></i><strong data-online-count>—</strong> 人在线</span></nav>
   <header class="app-header">
     <a class="brand" href="/" aria-label="返回大厅"><span class="brand-mark">麻</span><span>麻将</span><span class="brand-divider"></span><span class="brand-subtitle">四人牌桌</span></a>
     <div class="header-meta"><button id="alerts-toggle" class="text-button" type="button" aria-pressed="false" title="出牌及吃碰杠胡提醒已关闭">提醒已关</button><span class="connection"><i id="connection-dot"></i><span id="connection-label">游戏厅</span></span><span class="header-divider"></span><span>136张牌</span></div>
@@ -52,13 +54,13 @@
 
   <main id="game" class="game" hidden>
     <div class="game-heading">
-      <div class="room-heading"><span class="eyebrow">牌桌</span><strong id="room-number"></strong><button id="copy-room" class="text-button" type="button">复制邀请</button></div>
+      <div class="room-heading"><span class="eyebrow">牌桌</span><strong id="room-number"></strong><span id="room-presence" class="room-presence" role="status" hidden></span><button id="copy-room" class="text-button" type="button">邀请好友</button></div>
       <div class="table-tools"><span id="wall-label">牌墙 0</span><button id="leave-button" class="text-button danger" type="button">退出</button></div>
     </div>
     <section class="table-panel">
       <div class="seat-row" id="seat-row"></div>
       <div class="table-center">
-        <div class="table-center-header"><span id="phase-label">等待中</span><span id="turn-label"></span></div>
+      <div class="table-center-header"><span id="phase-label">等待中</span><span id="turn-label"></span><span id="deadline-label" class="deadline-label" aria-live="off"></span></div>
         <div id="discard-grid" class="discard-grid" aria-label="已打出的牌"></div>
         <div id="table-message" class="table-message" aria-live="polite"></div>
       </div>
@@ -70,6 +72,7 @@
       </section>
     </section>
     <section class="history-bar"><span>牌局记录</span><div id="table-log" aria-live="polite"></div></section>
+    <section class="room-chat" aria-label="房间聊天室"><div class="chat-heading"><h2>聊天室</h2><span>仅房间成员可见</span></div><ol id="chat-messages" aria-live="polite"></ol><form id="chat-form"><label class="sr-only" for="chat-input">聊天消息</label><input id="chat-input" maxlength="200" autocomplete="off" placeholder="说点什么…" required><button type="submit" aria-label="发送消息" title="发送消息">发送</button></form></section>
   </main>
 
   <footer class="app-footer"><span>局域网牌桌 · 基础规则</span><span>麻将 <i></i> 四人牌桌</span></footer>

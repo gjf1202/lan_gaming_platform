@@ -181,7 +181,7 @@ function frame(timestamp) {
   frameId = requestAnimationFrame(frame);
 }
 
-document.title = `游戏厅 · ${definition.title}`;
+document.title = '备忘录';
 canvas.width = definition.width;
 canvas.height = definition.height;
 canvas.setAttribute('aria-label', `${definition.title}游戏画面，请使用键盘或下方按钮操作`);

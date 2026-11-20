@@ -1,6 +1,5 @@
 import { COLORS, DIRECTIONS, cellKey, clearBoard, drawCell } from './core.js';
 
-const CELL = 48;
 export const LEVELS = [
   ['初见', ['#######', '#     #', '# @$. #', '#     #', '#######']],
   ['分路', ['#######', '#  .  #', '#  $  #', '#  $ .#', '# @   #', '#######']],
@@ -9,7 +8,11 @@ export const LEVELS = [
   ['转角', ['########', '#  .   #', '#  #   #', '#  $ $ #', '# .#   #', '#  @   #', '#      #', '########']],
   ['三步思量', ['########', '# . . .#', '#      #', '# $ $ $#', '#  @   #', '#      #', '########']],
   ['穿巷', ['#########', '#   .   #', '# #   # #', '# $ $   #', '#     . #', '# @     #', '#########']],
-  ['归位', ['#########', '# .   . #', '#   #   #', '# $   $ #', '#   $   #', '# . #   #', '#   @   #', '#########']]
+  ['归位', ['#########', '# .   . #', '#   #   #', '# $   $ #', '#   $   #', '# . #   #', '#   @   #', '#########']],
+  ['岔路', ['###########', '#    #    #', '# .$ #  . #', '#    #    #', '#    @$   #', '### # # ###', '#         #', '#  $ #  $ #', '# .  #  . #', '#    #    #', '###########']],
+  ['折返', ['###########', '#    #    #', '# .  #  . #', '#  $ #    #', '#      $  #', '### # # ###', '#    $    #', '#    #    #', '# .  #  * #', '#    #  @ #', '###########']],
+  ['隔间', ['###########', '#    #    #', '# .  #  . #', '#  $@#    #', '#         #', '### # #$###', '#         #', '#  $ #    #', '# .  #  * #', '#    #    #', '###########']],
+  ['终局', ['###########', '#    #    #', '# .$ # $. #', '#    #    #', '#         #', '###$# # ###', '#       $@#', '#    #    #', '# .  #  . #', '#    #    #', '###########']]
 ];
 
 export class SokobanGame {
@@ -86,58 +89,60 @@ export class SokobanGame {
 
   render(context) {
     clearBoard(context, 480, 480);
-    const offsetX = Math.floor((480 - this.columns * CELL) / 2);
-    const offsetY = Math.floor((480 - this.rows * CELL) / 2);
+    const cellSize = Math.floor(480 / Math.max(this.columns, this.rows));
+    const offsetX = Math.floor((480 - this.columns * cellSize) / 2);
+    const offsetY = Math.floor((480 - this.rows * cellSize) / 2);
     context.save();
     context.translate(offsetX, offsetY);
     for (const key of this.floor) {
       const [column, row] = key.split(',').map(Number);
-      drawCell(context, column, row, CELL, '#272c2e', 1);
+      drawCell(context, column, row, cellSize, '#272c2e', 1);
     }
     for (const key of this.walls) {
       const [column, row] = key.split(',').map(Number);
-      drawCell(context, column, row, CELL, '#454c50', 1);
+      drawCell(context, column, row, cellSize, '#454c50', 1);
       context.fillStyle = '#555e62';
-      context.fillRect(column * CELL + 3, row * CELL + 3, CELL - 6, 3);
+      context.fillRect(column * cellSize + 3, row * cellSize + 3, cellSize - 6, 3);
     }
     for (const key of this.goals) {
       const [column, row] = key.split(',').map(Number);
       context.strokeStyle = COLORS.accent;
       context.lineWidth = 2;
       context.beginPath();
-      context.arc((column + .5) * CELL, (row + .5) * CELL, 9, 0, Math.PI * 2);
+      context.arc((column + .5) * cellSize, (row + .5) * cellSize, Math.max(5, cellSize * .19), 0, Math.PI * 2);
       context.stroke();
     }
     for (const key of this.boxes) {
       const [column, row] = key.split(',').map(Number);
       const placed = this.goals.has(key);
-      drawCell(context, column, row, CELL, placed ? '#72967d' : '#a28d66', 6);
+      drawCell(context, column, row, cellSize, placed ? '#72967d' : '#a28d66', Math.max(4, cellSize * .125));
       context.strokeStyle = placed ? '#bbd3be' : '#d2bb91';
-      context.lineWidth = 2;
-      context.strokeRect(column * CELL + 11, row * CELL + 11, CELL - 22, CELL - 22);
+      context.lineWidth = Math.max(1, cellSize / 24);
+      const inset = cellSize * .23;
+      context.strokeRect(column * cellSize + inset, row * cellSize + inset, cellSize - inset * 2, cellSize - inset * 2);
       context.beginPath();
-      context.moveTo(column * CELL + 12, row * CELL + 12);
-      context.lineTo((column + 1) * CELL - 12, (row + 1) * CELL - 12);
-      context.moveTo((column + 1) * CELL - 12, row * CELL + 12);
-      context.lineTo(column * CELL + 12, (row + 1) * CELL - 12);
+      context.moveTo(column * cellSize + inset, row * cellSize + inset);
+      context.lineTo((column + 1) * cellSize - inset, (row + 1) * cellSize - inset);
+      context.moveTo((column + 1) * cellSize - inset, row * cellSize + inset);
+      context.lineTo(column * cellSize + inset, (row + 1) * cellSize - inset);
       context.stroke();
     }
     context.fillStyle = COLORS.blue;
     context.beginPath();
-    context.arc((this.player.x + .5) * CELL, (this.player.y + .5) * CELL, 14, 0, Math.PI * 2);
+    context.arc((this.player.x + .5) * cellSize, (this.player.y + .5) * cellSize, cellSize * .29, 0, Math.PI * 2);
     context.fill();
     context.fillStyle = '#d5e0e9';
-    context.fillRect(this.player.x * CELL + 17, this.player.y * CELL + 17, 4, 4);
-    context.fillRect(this.player.x * CELL + 27, this.player.y * CELL + 17, 4, 4);
+    context.fillRect(this.player.x * cellSize + cellSize * .35, this.player.y * cellSize + cellSize * .35, Math.max(2, cellSize * .08), Math.max(2, cellSize * .08));
+    context.fillRect(this.player.x * cellSize + cellSize * .58, this.player.y * cellSize + cellSize * .35, Math.max(2, cellSize * .08), Math.max(2, cellSize * .08));
     context.restore();
   }
 }
 
 export const definition = {
-  id: 'sokoban', title: '推箱子', description: '一步一步，把箱子送回家。', mode: '单人 · 八关解谜', width: 480, height: 480,
+  id: 'sokoban', title: '推箱子', description: '一步一步，把箱子送回家。', mode: '单人 · 十二关进阶解谜', width: 480, height: 480,
   optionLabel: '选择关卡', options: LEVELS.map(([title], index) => [String(index), `第 ${index + 1} 关 · ${title}`]), defaultOption: '0',
   scoreLabel: '步数', bestLabel: '本关最少', lowerBest: true,
-  rules: '把所有箱子推到圆圈标记的位置。只能推、不能拉，箱子卡住时可以悔步。所有关卡都可直接选择。',
+  rules: '把所有箱子推到圆圈标记的位置。只能推、不能拉，箱子卡住时可以悔步。后四关有四只箱子和分区通道，推错方向可能锁死。',
   keys: { ArrowUp: 'up', KeyW: 'up', ArrowDown: 'down', KeyS: 'down', ArrowLeft: 'left', KeyA: 'left', ArrowRight: 'right', KeyD: 'right', KeyU: 'undo', Backspace: 'undo' },
   help: [['方向键 / W A S D', '移动并推动箱子'], ['U / 退格键', '撤回一步'], ['P / 空格', '暂停或继续']],
   controls: [['up', '↑'], ['left', '←'], ['down', '↓'], ['right', '→'], ['undo', '悔步']],

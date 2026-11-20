@@ -5,7 +5,7 @@ const WINDS = ['东', '南', '西', '北'];
 const ui = Object.fromEntries([
   'lobby', 'game', 'nickname', 'room-code', 'create-tab', 'join-tab', 'create-panel', 'join-panel',
   'create-button', 'join-button', 'room-number', 'copy-room', 'leave-button', 'wall-label',
-  'seat-row', 'phase-label', 'turn-label', 'discard-grid', 'table-message', 'self-seat', 'hand-count',
+  'seat-row', 'phase-label', 'turn-label', 'deadline-label', 'discard-grid', 'table-message', 'self-seat', 'hand-count',
   'melds', 'hand', 'actions', 'table-log', 'connection-dot', 'connection-label', 'toast', 'leave-dialog',
   'cancel-leave', 'confirm-leave'
 ].map((id) => [id.replace(/-([a-z])/g, (_, letter) => letter.toUpperCase()), document.getElementById(id)]));
@@ -14,17 +14,28 @@ let sessionToken = localStorage.getItem(SESSION_KEY);
 let currentState = null;
 let eventSource = null;
 let toastTimer = 0;
+let serverOffset = 0;
 
 const mahjongAlerts = (() => {
   const STORAGE_KEY = 'mj-alerts';
   const FLASH_INTERVAL_MS = 900;
   const originalTitle = document.title;
+  const favicon = document.querySelector('link[rel="icon"]');
+  const originalFavicon = favicon?.href || '';
   const button = document.getElementById('alerts-toggle');
   let enabled = false;
   let latestState = null;
   let pendingKey = '';
   let titleTimer = null;
   let systemNotification = null;
+  let faviconFlashing = false;
+
+  function setAlertFavicon(active) {
+    if (!favicon) { return; }
+    favicon.href = active
+      ? `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="12" fill="#2b2d30"/><rect x="14" y="10" width="36" height="44" rx="5" fill="#e5e1d7"/><path d="M23 42V23l9 12 9-12v19" fill="none" stroke="#1f5b4b" stroke-width="4"/><circle cx="50" cy="14" r="11" fill="#d36f61" stroke="#2b2d30" stroke-width="3"/></svg>')}`
+      : originalFavicon;
+  }
 
   try {
     enabled = localStorage.getItem(STORAGE_KEY) === 'true';
@@ -42,6 +53,8 @@ const mahjongAlerts = (() => {
     clearInterval(titleTimer);
     titleTimer = null;
     document.title = originalTitle;
+    faviconFlashing = false;
+    setAlertFavicon(false);
     if (systemNotification) {
       systemNotification.close();
       systemNotification = null;
@@ -100,10 +113,9 @@ const mahjongAlerts = (() => {
       showToast(alert.message);
       return;
     }
-    const alertTitle = `${alert.message} · ${originalTitle}`;
-    document.title = alertTitle;
     titleTimer = setInterval(() => {
-      document.title = document.title === originalTitle ? alertTitle : originalTitle;
+      faviconFlashing = !faviconFlashing;
+      setAlertFavicon(faviconFlashing);
     }, FLASH_INTERVAL_MS);
     showSystemNotification(alert.message);
   }
@@ -190,6 +202,7 @@ async function api(path, body = {}) {
 
 function setState(state) {
   currentState = state;
+  serverOffset = state.serverTime - Date.now();
   mahjongAlerts.updateState(state);
   ui.lobby.hidden = true;
   ui.game.hidden = false;
@@ -231,7 +244,11 @@ async function runAction(path, body = {}) {
 function render() {
   const state = currentState;
   ui.roomNumber.textContent = state.code;
-  ui.wallLabel.textContent = `牌墙 ${state.wallCount}`;
+  const onlinePlayers = state.players.filter((entry) => entry?.online).length;
+  const emptySeats = state.players.filter((entry) => !entry).length;
+  document.getElementById('room-presence').textContent = `在线 ${onlinePlayers} · 空位 ${emptySeats}`;
+  window.updateRoomChat?.(state);
+  ui.wallLabel.textContent = `牌墙 ${state.wallCount} · 底分 ${state.baseScore ?? 1}`;
   ui.phaseLabel.textContent = ({ waiting: '等待中', playing: '进行中', claim: '等待响应', finished: '本局结束' })[state.phase];
   ui.selfSeat.textContent = `${WINDS[(state.you - state.dealer + 4) % 4]} · ${state.you + 1}号位`;
   renderSeats(state);
@@ -240,6 +257,20 @@ function render() {
   renderMelds(state);
   renderActions(state);
   renderLog(state);
+  updateCountdown();
+}
+
+function updateCountdown() {
+  const state = currentState;
+  const active = state && ['playing', 'claim'].includes(state.phase) && state.deadline;
+  if (!active) {
+    ui.deadlineLabel.textContent = '';
+    ui.deadlineLabel.classList.remove('urgent');
+    return;
+  }
+  const seconds = Math.max(0, Math.ceil((state.deadline - Date.now() - serverOffset) / 1000));
+  ui.deadlineLabel.textContent = `${state.phase === 'claim' ? '响应' : '出牌'} ${seconds}秒`;
+  ui.deadlineLabel.classList.toggle('urgent', seconds <= 8);
 }
 
 function renderSeats(state) {
@@ -260,6 +291,12 @@ function renderSeats(state) {
     windLabel.className = seat === state.dealer ? 'dealer' : '';
     windLabel.textContent = seat === state.dealer ? `${wind} · 庄家` : wind;
     meta.append(windLabel);
+    if (player) {
+      const score = document.createElement('span');
+      score.className = 'seat-score';
+      score.textContent = `积分 ${player.score > 0 ? '+' : ''}${player.score ?? 0}`;
+      meta.append(score);
+    }
     if (player && state.phase !== 'waiting') {
       const count = document.createElement('span');
       count.className = 'tile-count';
@@ -287,22 +324,37 @@ function renderSeats(state) {
 
 function renderDiscards(state) {
   ui.discardGrid.replaceChildren();
-  for (const player of state.players) {
+  state.players.forEach((player, seat) => {
     if (!player) {
-      continue;
+      return;
     }
+    const lane = document.createElement('section');
+    lane.className = `discard-seat${seat === state.lastDiscard?.seat && state.phase === 'claim' ? ' latest' : ''}`;
+    const label = document.createElement('div');
+    label.className = 'discard-seat-label';
+    label.textContent = `${WINDS[(seat - state.dealer + 4) % 4]} · ${player.name}`;
+    const tiles = document.createElement('div');
+    tiles.className = 'discard-seat-tiles';
     for (const discard of player.discards) {
       const tile = makeTileElement(discard.tile);
+      tile.setAttribute('aria-label', `${player.name} 打出的 ${tileParts(discard.tile).main}${tileParts(discard.tile).sub}`);
       if (discard.claimed) {
         tile.classList.add('claimed');
       }
-      ui.discardGrid.append(tile);
+      tiles.append(tile);
     }
-  }
+    lane.append(label, tiles);
+    ui.discardGrid.append(lane);
+  });
   if (state.phase === 'claim' && state.lastDiscard) {
     ui.tableMessage.textContent = `${state.players[state.lastDiscard.seat].name} 打出 ${tileParts(state.lastDiscard.tile).main}${tileParts(state.lastDiscard.tile).sub}。`;
   } else if (state.phase === 'finished') {
-    ui.tableMessage.textContent = state.winner === null ? '流局。' : `${state.players[state.winner].name} 胡牌。`;
+    if (state.winner === null) {
+      ui.tableMessage.textContent = '流局 · 不计分。';
+    } else {
+      const change = state.result?.changes?.[state.you] ?? 0;
+      ui.tableMessage.textContent = `${state.players[state.winner].name} 胡牌 · 本局${change > 0 ? '+' : ''}${change} 分`;
+    }
   } else if (state.phase === 'waiting') {
     ui.tableMessage.textContent = `请准备 · ${state.players.filter(Boolean).length}/4 人已入座`;
   } else {
@@ -445,8 +497,9 @@ ui.copyRoom.addEventListener('click', async () => {
     const local = ['localhost', '127.0.0.1', '[::1]'].includes(location.hostname);
     const address = local ? info.addresses[0] || location.origin : location.origin;
     const invite = `${address}/games/mj/?room=${currentState.code}`;
+    const emptySeats = currentState.players.filter((entry) => !entry).length;
     try {
-      await navigator.clipboard.writeText(invite);
+      await navigator.clipboard.writeText(`麻将牌桌邀请：${invite}\n房间号：${currentState.code}\n当前空位：${emptySeats}\n请连接同一局域网加入。`);
       showToast('邀请链接已复制。');
     } catch {
       showToast(invite);
@@ -476,3 +529,5 @@ if (sessionToken) {
 
 const invitedRoom = new URLSearchParams(location.search).get('room');
 if (/^\d{6}$/.test(invitedRoom || '')) { selectEntry('join'); ui.roomCode.value = invitedRoom; }
+
+setInterval(updateCountdown, 250);

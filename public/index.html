@@ -5,9 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#1e1f22">
   <meta name="description" content="斗地主、五子棋、麻将与四款经典休闲游戏，一个大厅轻松玩。">
-  <title>局域网游戏大厅</title>
+  <title>备忘录</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%232b2d30'/%3E%3Cpath d='M20 16v32h27' fill='none' stroke='%239cb9aa' stroke-width='6'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="/style.css">
+  <script src="/presence.js" defer></script>
   <script src="/app.js" defer></script>
 </head>
 <body>
@@ -40,7 +41,7 @@
         <div><div class="eyebrow">和好友，一起放松片刻</div><h1 id="welcome-title">选个游戏，开一局。</h1><p>七款经典游戏，独自放松，或与好友同乐。</p></div>
         <button class="button primary" id="create-room" type="button"><span>＋</span> 创建房间</button>
       </section>
-      <section class="summary" aria-label="大厅概况"><span><strong>07</strong> 款游戏</span><span><strong id="room-count">—</strong> 个房间</span><span><strong id="player-count">—</strong> 人在房间</span><button class="text-button invite-button" id="copy-lobby" type="button">复制大厅链接 <span>↗</span></button></section>
+      <section class="summary" aria-label="大厅概况"><span><strong>07</strong> 款游戏</span><span><strong id="room-count">—</strong> 个房间</span><span><strong id="player-count">—</strong> 人在房间</span><span><strong id="online-count" data-online-count>—</strong> 人在线</span><button class="text-button invite-button" id="copy-lobby" type="button">复制大厅链接 <span>↗</span></button></section>
       <section aria-labelledby="games-title">
         <div class="section-heading"><h2 id="games-title">好友对战</h2><span class="muted">创建房间，邀请好友</span></div>
         <div class="game-grid">
@@ -75,7 +76,7 @@
           </article>
           <article class="game-card">
             <a class="game-art sokoban-art" href="/games/sokoban/" aria-label="打开推箱子"><div class="mini-box">×</div><span class="art-index">07 / 推箱子</span></a>
-            <div class="game-info"><div class="game-title"><h3>推箱子</h3><span class="badge">单人</span></div><p>一步一步，把箱子归位。</p><div class="game-footer"><span class="game-room-count">八关解谜</span><a class="button small" href="/games/sokoban/">开始玩 ↗</a></div></div>
+            <div class="game-info"><div class="game-title"><h3>推箱子</h3><span class="badge">单人</span></div><p>一步一步，把箱子归位。</p><div class="game-footer"><span class="game-room-count">十二关进阶解谜</span><a class="button small" href="/games/sokoban/">开始玩 ↗</a></div></div>
           </article>
         </div>
       </section>

@@ -1,6 +1,6 @@
 import { randomBytes, randomInt } from 'node:crypto';
 
-import { readBody, sendJson, rateLimit, openEvents, describeRooms, fail, validName, pushRoom } from '../../lib/transport.mjs';
+import { readBody, sendJson, rateLimit, openEvents, openRoomWatcher, pushRoomWatchers, closeRoomWatchers, describeRooms, fail, validName, pushRoom, addRoomChatMessage } from '../../lib/transport.mjs';
 
 export function createGameService() {
   const BOARD_SIZE = 15;
@@ -34,10 +34,15 @@ export function createGameService() {
       rematchVotes: room.rematchVotes,
       deadline: room.deadline,
       serverTime: Date.now(),
-      log: room.log
+      log: room.log,
+      chat: room.chat
     };
   }
-  function push(room) { pushRoom(room, sessions, view); }
+  function spectatorView(room) { return { ...view(room, { seat: 0 }), you: null, chat: undefined, spectator: true }; }
+  function push(room) {
+    pushRoom(room, sessions, view);
+    pushRoomWatchers(room, spectatorView);
+  }
   function makeRoom(name) {
     if (rooms.size >= MAX_ROOMS) { fail('房间数量已满，请稍后再试。', 503); }
     let code;
@@ -45,7 +50,7 @@ export function createGameService() {
     const room = {
       code, host: 0, players: [newPlayer(name, 0), null], board: newBoard(), moves: [],
       phase: 'waiting', turn: 0, winner: null, undoRequest: null, rematchVotes: [],
-      log: [], updatedAt: Date.now(), deadline: 0
+      log: [], chat: [], updatedAt: Date.now(), deadline: 0
     };
     rooms.set(code, room);
     bindSession(room, room.players[0]);
@@ -165,7 +170,7 @@ export function createGameService() {
     room.players[player.seat] = null;
     log(room, `${player.name} 离开了房间`);
     const remaining = room.players.filter(Boolean);
-    if (remaining.length === 0) { rooms.delete(room.code); return; }
+    if (remaining.length === 0) { rooms.delete(room.code); closeRoomWatchers(room); return; }
     if (room.host === player.seat) { room.host = remaining[0].seat; }
     room.phase = 'waiting';
     room.board = newBoard();
@@ -205,6 +210,12 @@ export function createGameService() {
     rateLimit(session);
     if (path === '/api/resume') { sendJson(response, { state: view(room, player) }); return; }
     if (path === '/api/leave') { removePlayer(room, player); sendJson(response, { ok: true }); return; }
+    if (path === '/api/chat') {
+      addRoomChatMessage(room, player, body.text);
+      push(room);
+      sendJson(response, { state: view(room, player) });
+      return;
+    }
     if (!room.players.every(Boolean) && path !== '/api/resume') { fail('等待另一位玩家加入。'); }
     roomAction(room, player, path, body);
     push(room);
@@ -216,14 +227,20 @@ export function createGameService() {
       const expired = room.players.filter(player => player && !player.online && player.offlineAt && now - player.offlineAt > SEAT_RESERVE_MS);
       for (const player of expired) { if (rooms.has(room.code)) { removePlayer(room, player); } }
       if (!rooms.has(room.code)) { continue; }
-      if (now - room.updatedAt > ROOM_TTL_MS && !room.players.some(player => player?.online)) { rooms.delete(room.code); }
+      if (now - room.updatedAt > ROOM_TTL_MS && !room.players.some(player => player?.online)) { rooms.delete(room.code); closeRoomWatchers(room); }
     }
   }, 1000);
 
   return {
     handleApi: api,
     listRooms: () => describeRooms(rooms, 'wzq', 2),
-    openEvents(request, response, token) {
+    openEvents(request, response, token, watchCode) {
+      if (watchCode) {
+        const room = rooms.get(String(watchCode));
+        if (!room) { fail('房间不存在。', 404); }
+        openRoomWatcher(request, response, room, spectatorView);
+        return;
+      }
       const session = requireSession(token);
       openEvents(request, response, session, () => {
         if (rooms.has(session.room.code)) { push(session.room); }
@@ -231,6 +248,7 @@ export function createGameService() {
     },
     close() {
       clearInterval(maintenance);
+      for (const room of rooms.values()) { closeRoomWatchers(room); }
       for (const session of sessions.values()) { session.stream?.end(); }
     }
   };

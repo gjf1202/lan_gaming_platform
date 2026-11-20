@@ -5,15 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#1e1f22">
   <meta name="description" content="三人一桌，局域网斗地主。">
-  <title>游戏厅 · 牌桌</title>
+  <title>备忘录</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%232b2d30'/%3E%3Ctext x='32' y='47' text-anchor='middle' font-size='46' fill='%237da6ff'%3E♠%3C/text%3E%3C/svg%3E">
   <link rel="stylesheet" href="/games/ddz/style.css">
   <link rel="stylesheet" href="/platform.css">
+  <script src="/presence.js" defer></script>
+  <script src="/room-chat.js" defer></script>
   <script src="/bridge.js" defer></script>
   <script src="/games/ddz/app.js" defer></script>
 </head>
 <body data-platform-game="ddz">
-  <nav class="platform-bar" aria-label="游戏平台"><a class="platform-home" href="/">▦ <strong>游戏厅</strong> <span>/ 大厅</span></a><div class="platform-games"><a href="/games/ddz/" aria-current="page">斗地主</a><a href="/games/wzq/" >五子棋</a><a href="/games/mj/" >麻将</a></div></nav>
+  <nav class="platform-bar" aria-label="游戏平台"><a class="platform-home" href="/">▦ <strong>游戏厅</strong> <span>/ 大厅</span></a><div class="platform-games"><a href="/games/ddz/" aria-current="page">斗地主</a><a href="/games/wzq/" >五子棋</a><a href="/games/mj/" >麻将</a></div><span class="global-online"><i></i><strong data-online-count>—</strong> 人在线</span></nav>
   <header class="app-header">
     <a class="brand" href="/" aria-label="返回大厅"><span class="brand-mark">♠</span><strong>牌友会</strong><span class="brand-divider"></span><span class="brand-en">好友对局</span></a>
     <div class="header-right"><span class="connection"><i id="connection-dot"></i><span id="connection-label">游戏厅</span></span><button class="icon-button" id="rules-button" aria-label="玩法" title="玩法">?</button></div>
@@ -68,12 +70,12 @@
 
   <main id="game" class="game" hidden>
     <div class="room-toolbar">
-      <div class="room-title"><span class="eyebrow">房间</span><strong id="room-number"></strong><span id="practice-badge" class="muted-badge" hidden>单人练习</span><button id="copy-room" class="text-button small">邀请</button></div>
+      <div class="room-title"><span class="eyebrow">房间</span><strong id="room-number"></strong><span id="practice-badge" class="muted-badge" hidden>单人练习</span><span id="room-presence" class="room-presence" role="status" hidden></span><button id="copy-room" class="text-button small">邀请好友</button></div>
       <div class="room-tools"><span id="round-label">等待中</span><button id="sound-toggle" class="icon-button preference-button" type="button" aria-label="音效已开" aria-pressed="true" title="音效已开启，点击切换。">♫</button><button id="notification-toggle" class="icon-button preference-button" type="button" aria-label="提醒已关" aria-pressed="false" title="提醒已关闭，点击切换。">!</button><button id="leave-button" class="text-button danger-text">退出</button></div>
     </div>
 
     <section class="board" aria-label="牌桌">
-      <div class="board-top"><div class="bottom-area"><span class="label-mono">底牌</span><div id="bottom-cards" class="mini-cards"></div></div><div class="score-pill">倍数 <strong id="multiplier">×1</strong></div></div>
+      <div class="board-top"><div class="bottom-area"><span class="label-mono">底牌</span><div id="bottom-cards" class="mini-cards"></div></div><div class="score-pill">底分 <strong id="base-score">1</strong> · 倍数 <strong id="multiplier">×1</strong></div></div>
       <div id="opponent-left" class="opponent opponent-left"></div>
       <div id="opponent-right" class="opponent opponent-right"></div>
       <div class="board-watermark" aria-hidden="true">♠<span>牌友会</span></div>
@@ -96,6 +98,7 @@
       <p id="counter-note">其他玩家的剩余牌合计。</p>
     </details>
     <details class="activity"><summary>对局记录 <span>本局日志</span></summary><ol id="game-log"></ol></details>
+    <section class="room-chat" aria-label="房间聊天室"><div class="chat-heading"><h2>聊天室</h2><span>仅房间成员可见</span></div><ol id="chat-messages" aria-live="polite"></ol><form id="chat-form"><label class="sr-only" for="chat-input">聊天消息</label><input id="chat-input" maxlength="200" autocomplete="off" placeholder="说点什么…" required><button type="submit" aria-label="发送消息" title="发送消息">发送</button></form></section>
   </main>
 
   <footer class="app-footer"><span>与好友，同桌一局。</span><span>深色主题 <i></i> 局域网对战</span></footer>
@@ -106,12 +109,12 @@
     <p>3人对战 · 54张牌</p>
     <dl class="rules-list">
       <dt>开始</dt><dd>全部准备后由房主开始。每人17张牌，地主再拿3张底牌。</dd>
-      <dt>叫分</dt><dd>可叫1–3分或不叫，最高分者当地主。全部不叫则重新发牌。</dd>
+      <dt>抢地主</dt><dd>三人依次选择抢地主或不抢。最后选择抢地主的人获得底牌；每抢一次本局倍数翻倍。全部不抢则重新发牌。</dd>
       <dt>牌型</dt><dd>支持单张、对子、三张、顺子、飞机及带牌。顺子不能包含2和大小王。</dd>
       <dt>跟牌</dt><dd>跟牌需牌型、张数相同且点数更大；炸弹压普通牌，王炸最大。连续两家不要后，重新领出。</dd>
       <dt>带牌</dt><dd>四带二可以带一对。飞机带单可用对子拆作单牌，不可带三张或四张同点牌。</dd>
-      <dt>计分</dt><dd>叫分为底分，炸弹、王炸、春天翻倍。地主计分乘2，农民各计1份。</dd>
-      <dt>超时</dt><dd>叫分20秒，出牌45秒。超时自动不叫、不要或领出最小单张。断线后2分钟内可重连。</dd>
+      <dt>计分</dt><dd>基础分为1，抢地主、炸弹、王炸、春天会翻倍。地主计分乘2，农民各计1份。</dd>
+      <dt>超时</dt><dd>抢地主20秒，出牌45秒。超时自动不抢、不要或领出最小单张。断线后2分钟内可重连。</dd>
     </dl>
     <div class="modal-note">分享局域网地址和房间号即可加入。重启主机服务会清空所有房间。</div>
   </dialog>

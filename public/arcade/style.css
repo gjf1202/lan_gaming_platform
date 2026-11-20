@@ -10,6 +10,7 @@ button:disabled { opacity: .4; cursor: default; }
 button:focus-visible, a:focus-visible, select:focus-visible, canvas:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 .topbar { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 20px 32px; border-bottom: 1px solid var(--line); background: #242529; }
 .brand { font-weight: 600; white-space: nowrap; }.brand span { color: var(--muted); font-size: 12px; margin-left: 12px; font-weight: 400; }
+.global-online { display: flex; align-items: center; gap: 6px; color: #aeb9b1; font-size: 10px; white-space: nowrap; }.global-online i { width: 5px; height: 5px; background: #84ad98; border-radius: 50%; }.global-online strong { color: #cbd7cf; font-family: ui-monospace, Consolas, monospace; font-weight: 500; }
 nav { display: flex; gap: 8px; flex-wrap: wrap; }nav a { color: var(--muted); font-size: 12px; padding: 7px 10px; border-radius: 4px; }nav a:hover, nav a[aria-current] { color: #c2d6c8; background: #343d37; }
 main { max-width: 1120px; padding: 35px 30px 0; margin: auto; }
 .page-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 25px; gap: 20px; }.eyebrow { color: var(--accent); font-size: 11px; letter-spacing: 2px; margin: 0 0 10px; }h1 { font-size: 29px; font-weight: 550; margin: 0 0 9px; }.page-heading p:not(.eyebrow) { color: var(--muted); font-size: 13px; margin: 0; }.save-note { color: #737981; font-size: 11px; }

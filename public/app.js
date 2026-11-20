@@ -142,15 +142,21 @@ function renderRooms(force = false) {
     statusCell.append(element('span', `status-label${room.joinable ? '' : ' busy'}`, status));
     const actionCell = element('td');
     const ownRoom = activeRooms.get(room.game) === room.code;
-    const button = element('button', 'button small', ownRoom ? '继续 →' : '加入 →');
-    button.type = 'button';
-    button.dataset.unavailable = String(!online || (!room.joinable && !ownRoom));
-    button.disabled = busy || button.dataset.unavailable === 'true';
-    button.addEventListener('click', () => {
-      if (ownRoom) { location.assign(`/games/${room.game}/`); }
-      else { void runAction(() => enterRoom(room.game, room.code)); }
-    });
-    actionCell.append(button);
+    const watchButton = element('a', 'button small secondary', '观战');
+    watchButton.href = `/watch.html?game=${room.game}&room=${room.code}`;
+    watchButton.setAttribute('aria-label', `观战 ${GAME_NAMES[room.game]} 房间 ${room.code}`);
+    actionCell.append(watchButton);
+    if (ownRoom || room.joinable) {
+      const button = element('button', 'button small', ownRoom ? '继续 →' : '加入 →');
+      button.type = 'button';
+      button.dataset.unavailable = String(!online);
+      button.disabled = busy || button.dataset.unavailable === 'true';
+      button.addEventListener('click', () => {
+        if (ownRoom) { location.assign(`/games/${room.game}/`); }
+        else { void runAction(() => enterRoom(room.game, room.code)); }
+      });
+      actionCell.append(button);
+    }
     row.append(statusCell, actionCell);
     list.append(row);
   }
@@ -164,6 +170,7 @@ function renderRooms(force = false) {
 function renderLobby() {
   byId('room-count').textContent = online ? String(lobby.rooms.length) : '—';
   byId('player-count').textContent = online ? String(lobby.rooms.reduce((count, room) => count + room.online, 0)) : '—';
+  byId('online-count').textContent = online ? String(lobby.online ?? '—') : '—';
   for (const game of Object.keys(GAME_NAMES)) {
     const count = lobby.rooms.filter((room) => room.game === game).length;
     byId(`${game}-count`).textContent = !online ? '暂不可用' : count ? `${count} 个房间` : '暂无房间';

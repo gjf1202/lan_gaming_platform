@@ -1,0 +1,30 @@
+:root { color-scheme: dark; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif; background: #1e1f22; color: #d9dce2; }
+* { box-sizing: border-box; }
+body { margin: 0; min-height: 100vh; }
+header { min-height: 48px; display: flex; align-items: center; justify-content: space-between; padding: 0 max(18px, calc((100vw - 1120px) / 2)); border-bottom: 1px solid #383b42; background: #25262a; color: #b8c9bf; font-size: 11px; }
+header a { color: inherit; text-decoration: none; } header a span { color: #858b94; }
+#connection { display: flex; align-items: center; gap: 7px; color: #95ae9f; } #connection i { width: 6px; height: 6px; border-radius: 50%; background: #83ad94; }
+main { width: min(1120px, calc(100% - 32px)); margin: 28px auto 55px; }
+.heading { min-height: 66px; display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 15px; }
+.heading p { margin: 0 0 4px; color: #a2b6a9; font-size: 10px; } h1 { margin: 0; font-size: 21px; font-weight: 500; } h1 span { font-family: Consolas, monospace; }
+#phase { padding: 6px 9px; border: 1px solid #41444b; border-radius: 4px; color: #abb2bc; font-size: 10px; }
+.watch-panel { overflow: hidden; border: 1px solid #3b3e44; border-radius: 6px; background: #25272b; }
+#public-board, #ddz-board, #mj-board { padding: 16px; }
+#gomoku-board { width: min(100%, 600px); aspect-ratio: 1; height: auto; display: block; margin: 0 auto; border: 1px solid #53544e; border-radius: 3px; background: #353631; }
+h2 { margin: 0 0 12px; color: #b7bdc5; font-size: 12px; font-weight: 500; }
+#ddz-table, #mj-table { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 9px; }
+.public-seat { min-width: 0; padding: 12px; border: 1px solid #393c43; border-radius: 4px; background: #2a2c31; }
+.public-seat.active { border-color: #718e7d; }
+.public-seat header { min-height: 0; padding: 0 0 8px; border: 0; background: transparent; }
+.public-seat header strong { overflow: hidden; color: #d5d9df; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.public-seat header span { flex: 0 0 auto; color: #9299a3; font-size: 9px; }
+.public-seat p { margin: 5px 0 0; color: #a9afb9; font-size: 10px; line-height: 1.6; overflow-wrap: anywhere; }
+.public-card { display: inline-block; margin: 5px 4px 0 0; padding: 5px 7px; border: 1px solid #4b4e55; border-radius: 3px; background: #222428; color: #d4d6dc; font-size: 11px; }
+.lower-grid { display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid #383b42; }
+.lower-grid section { min-width: 0; padding: 16px; } .lower-grid section + section { border-left: 1px solid #383b42; }
+#players { display: grid; gap: 7px; }
+.player-row { display: flex; justify-content: space-between; gap: 10px; padding: 8px 10px; border-radius: 3px; background: #2b2d32; color: #c8cbd2; font-size: 10px; }
+.player-row span:last-child { color: #9299a3; }
+#log { max-height: 240px; overflow: auto; margin: 0; padding-left: 19px; color: #a7adb7; font-size: 10px; line-height: 1.85; }
+#error { color: #d59b94; text-align: center; font-size: 12px; }
+@media (max-width: 640px) { main { margin-top: 15px; }.heading { min-height: 55px; } h1 { font-size: 18px; } #public-board, #ddz-board, #mj-board { padding: 9px; } #ddz-table, #mj-table { grid-template-columns: 1fr; } .lower-grid { grid-template-columns: 1fr; } .lower-grid section + section { border-left: 0; border-top: 1px solid #383b42; } }

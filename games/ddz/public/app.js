@@ -93,7 +93,7 @@ async function playSound(name) {
   const cues = {
     card: [[520, 0, 0.16]],
     pass: [[310, 0, 0.18]],
-    bid: [[430, 0, 0.17], [610, 0.15, 0.22]],
+    grab: [[520, 0, 0.15], [700, 0.13, 0.2]],
     bomb: [[330, 0, 0.16, 0.12, 'triangle'], [500, 0.13, 0.16, 0.12, 'triangle'], [760, 0.26, 0.28, 0.14, 'triangle']],
     turn: [[660, 0, 0.2], [880, 0.22, 0.28]],
     test: [[440, 0, 0.24], [660, 0.26, 0.24], [880, 0.52, 0.32]]
@@ -123,8 +123,8 @@ function clearTitleFlash() {
   turnNotification = null;
 }
 function notifyTurn() {
-  if (!notificationsEnabled || !state || state.turn !== state.you || !['playing', 'bidding'].includes(state.phase)) { return; }
-  const message = state.phase === 'bidding' ? '轮到你叫分。' : '轮到你了。';
+  if (!notificationsEnabled || !state || state.turn !== state.you || !['playing', 'grabbing'].includes(state.phase)) { return; }
+  const message = state.phase === 'grabbing' ? '轮到你抢地主。' : '轮到你了。';
   if (document.visibilityState === 'visible') {
     toast(message);
     return;
@@ -139,7 +139,7 @@ function notifyTurn() {
   if (titleTimer) { return; }
   titleTimer = setInterval(() => {
     titleFlashing = !titleFlashing;
-    document.title = titleFlashing ? `轮到你了 · ${originalTitle}` : originalTitle;
+    document.title = originalTitle;
   }, 900);
 }
 async function enableBrowserNotifications() {
@@ -242,11 +242,11 @@ function applyState(next) {
     if (latestSound) { void playSound(latestSound); }
   }
   if (previous && previous.code === state.code && previous.you === state.you && state.turn === state.you &&
-    (previous.turn !== state.you || previous.phase !== state.phase || previous.round !== state.round) && ['playing', 'bidding'].includes(state.phase)) {
+    (previous.turn !== state.you || previous.phase !== state.phase || previous.round !== state.round) && ['playing', 'grabbing'].includes(state.phase)) {
     void playSound('turn');
     notifyTurn();
   }
-  if (state.turn !== state.you || !['playing', 'bidding'].includes(state.phase)) { clearTitleFlash(); }
+  if (state.turn !== state.you || !['playing', 'grabbing'].includes(state.phase)) { clearTitleFlash(); }
   serverOffset = next.serverTime - Date.now();
   const handIds = new Set(state.hand.map(card => card.id));
   for (const id of selected) { if (!handIds.has(id)) { selected.delete(id); } }
@@ -256,8 +256,14 @@ function applyState(next) {
   byId('room-number').textContent = state.code;
   byId('practice-badge').hidden = !state.practice;
   byId('copy-room').hidden = state.practice;
+  const onlinePlayers = state.players.filter(entry => entry?.online).length;
+  const emptySeats = state.players.filter(entry => !entry).length;
+  byId('room-presence').textContent = `在线 ${onlinePlayers} · 空位 ${emptySeats}`;
+  byId('room-presence').hidden = state.practice;
+  window.updateRoomChat?.(state);
   byId('round-label').textContent = state.round ? `第 ${state.round} 局` : '等待中';
   byId('multiplier').textContent = `×${state.multiplier}`;
+  byId('base-score').textContent = String(state.baseScore ?? 1);
   renderBoard();
   renderPlayers();
   renderHand();
@@ -296,7 +302,7 @@ function appendCards(container, cards, mini = true) {
 function playerStatus(player) {
   if (!player.online) { return '离线'; }
   if (state.phase === 'waiting' || state.phase === 'finished') { return player.ready ? '准备' : '未准备'; }
-  if (state.phase === 'bidding') { return player.bid === null ? '等待中' : player.bid ? `叫 ${player.bid} 分` : '不叫'; }
+  if (state.phase === 'grabbing') { return player.grabbed === null ? '等待中' : player.grabbed ? '抢地主' : '不抢'; }
   return state.turn === player.seat ? '进行中' : '等待中';
 }
 function roleNode(seat) {
@@ -306,7 +312,7 @@ function roleNode(seat) {
 function renderOpponent(container, seat) {
   container.replaceChildren();
   const player = state.players[seat];
-  container.classList.toggle('active', Boolean(player && state.turn === seat && ['bidding', 'playing'].includes(state.phase)));
+  container.classList.toggle('active', Boolean(player && state.turn === seat && ['grabbing', 'playing'].includes(state.phase)));
   if (!player) {
     const heading = element('div', 'player-heading');
     const info = element('div');
@@ -322,7 +328,7 @@ function renderOpponent(container, seat) {
   const meta = element('div', 'player-meta');
   meta.append(roleNode(seat), element('span', '', `${player.score > 0 ? '+' : ''}${player.score} 分`));
   container.append(heading, meta);
-  if (['playing', 'bidding'].includes(state.phase)) {
+  if (['playing', 'grabbing'].includes(state.phase)) {
     const remaining = element('div', `remaining${player.count <= 2 ? ' warning' : ''}`);
     remaining.append(element('span', 'card-back'), element('span', '', String(player.count)));
     remaining.setAttribute('aria-label', `剩余 ${player.count} 张`);
@@ -362,8 +368,8 @@ function renderBoard() {
   if (state.phase === 'waiting') {
     const count = state.players.filter(Boolean).length;
     center.append(element('h2', '', count < 3 ? '等待中' : '请准备'), element('p', '', count < 3 ? `${count} / 3 人已加入` : '全部准备后，由房主开始。'));
-  } else if (state.phase === 'bidding') {
-    center.append(element('h2', '', '叫分中'), element('p', '', state.bid ? `当前最高：${state.bid} 分` : '请选择叫分。'));
+  } else if (state.phase === 'grabbing') {
+    center.append(element('h2', '', '抢地主'), element('p', '', `已抢 ${state.grabCount} 次 · 请选择抢或不抢。`));
   } else if (state.phase === 'finished') {
     const won = state.result.changes[state.you] > 0;
     const delta = state.result.changes[state.you];
@@ -449,9 +455,9 @@ function renderActions() {
     bar.append(element('span', 'action-note', `等待 ${state.players[state.turn].name}`));
     return;
   }
-  if (state.phase === 'bidding') {
-    bar.append(actionButton('不叫', 'secondary', () => perform('bid', { value: 0 })));
-    for (const value of [1, 2, 3]) { bar.append(actionButton(`${value}`, value === 3 ? 'primary' : 'secondary', () => perform('bid', { value }), value <= state.bid)); }
+  if (state.phase === 'grabbing') {
+    bar.append(actionButton('不抢', 'secondary', () => perform('grab', { grab: false })));
+    bar.append(actionButton('抢地主', 'primary', () => perform('grab', { grab: true })));
     return;
   }
   bar.append(actionButton('不要', 'secondary', () => perform('pass'), !state.lastPlay));
@@ -483,7 +489,7 @@ function renderLog() {
 function updateClock() {
   if (!state) { return; }
   const clock = byId('countdown');
-  const active = ['playing', 'bidding'].includes(state.phase);
+  const active = ['playing', 'grabbing'].includes(state.phase);
   if (!active) {
     clock.textContent = '';
     byId('turn-status').textContent = state.phase === 'finished' ? '准备下一局。' : '局域网 · 仅记分';
@@ -492,14 +498,15 @@ function updateClock() {
   const seconds = Math.max(0, Math.ceil((state.deadline - Date.now() - serverOffset) / 1000));
   clock.textContent = `${String(seconds).padStart(2, '0')}秒`;
   clock.classList.toggle('urgent', seconds <= 8);
-  byId('turn-status').textContent = `${state.turn === state.you ? '轮到你了' : state.players[state.turn].name}${state.phase === 'bidding' ? ' · 叫分' : ''}${state.phase === 'playing' && !state.lastPlay ? ' · 领出' : ''}`;
+  byId('turn-status').textContent = `${state.turn === state.you ? '轮到你了' : state.players[state.turn].name}${state.phase === 'grabbing' ? ' · 抢地主' : ''}${state.phase === 'playing' && !state.lastPlay ? ' · 领出' : ''}`;
 }
 async function copyInvite() {
   const addressInfo = await fetch('/api/info').then(response => response.json());
   const local = ['localhost', '127.0.0.1', '[::1]'].includes(location.hostname);
   const base = local ? addressInfo.addresses[0] || location.origin : location.origin;
   const invite = `${base}/games/ddz/?room=${state.code}`;
-  const text = `牌桌邀请：${invite}\n房间号：${state.code}\n请连接同一局域网。`;
+  const emptySeats = state.players.filter(entry => !entry).length;
+  const text = `牌桌邀请：${invite}\n房间号：${state.code}\n当前空位：${emptySeats}\n请连接同一局域网加入。`;
   try {
     if (!navigator.clipboard?.writeText) { throw new Error('Clipboard unavailable'); }
     await navigator.clipboard.writeText(text);
@@ -558,7 +565,7 @@ document.addEventListener('visibilitychange', () => {
     const pending = titleTimer !== null;
     clearTitleFlash();
     if (pending) { notifyTurn(); }
-  } else if (notificationsEnabled && state && state.turn === state.you && ['playing', 'bidding'].includes(state.phase)) {
+  } else if (notificationsEnabled && state && state.turn === state.you && ['playing', 'grabbing'].includes(state.phase)) {
     notifyTurn();
   }
 });
@@ -581,7 +588,7 @@ byId('copy-room').addEventListener('click', () => { void withBusy(copyInvite); }
 byId('hand').addEventListener('click', event => {
   const card = event.target.closest('button[data-id]');
   if (!card || !state) { return; }
-  if (!['playing', 'bidding'].includes(state.phase)) { return; }
+  if (!['playing', 'grabbing'].includes(state.phase)) { return; }
   const id = card.dataset.id;
   if (selected.has(id)) { selected.delete(id); } else { selected.add(id); }
   updateSelection();

@@ -4,13 +4,14 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#1e1f22">
-  <title>游戏厅 · 经典游戏</title>
+  <title>备忘录</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%232b2d30'/%3E%3Ctext x='12' y='46' fill='%239dbdab' font-size='40'%3E游%3C/text%3E%3C/svg%3E">
   <link rel="stylesheet" href="/arcade/style.css">
+  <script src="/presence.js" defer></script>
   <script type="module" src="/arcade/app.js"></script>
 </head>
 <body>
-  <header class="topbar"><a class="brand" href="/">▦ 游戏厅 <span>/ 返回大厅</span></a><nav aria-label="经典游戏"><a href="/games/snake/">贪吃蛇</a><a href="/games/tetris/">俄罗斯方块</a><a href="/games/tank/">90坦克</a><a href="/games/sokoban/">推箱子</a></nav></header>
+  <header class="topbar"><a class="brand" href="/">▦ 游戏厅 <span>/ 返回大厅</span></a><nav aria-label="经典游戏"><a href="/games/snake/">贪吃蛇</a><a href="/games/tetris/">俄罗斯方块</a><a href="/games/tank/">90坦克</a><a href="/games/sokoban/">推箱子</a></nav><span class="global-online"><i></i><strong data-online-count>—</strong> 人在线</span></header>
   <main>
     <div class="page-heading"><div><p class="eyebrow" id="mode-label">经典游戏</p><h1 id="game-title">载入游戏…</h1><p id="game-description">放松片刻，来上一局。</p></div><span class="save-note">记录保存在当前浏览器</span></div>
     <div class="game-layout">
